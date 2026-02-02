@@ -1,34 +1,53 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import {
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  ShieldCheck,
+  Star,
+  Sun,
+  Moon,
+} from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
+import { motion } from 'framer-motion';
 
 function Signup() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup, loginWithGoogle, loginWithGitHub } = useAuth();
+  const [isFocused, setIsFocused] = useState({
+    name: false,
+    email: false,
+    password: false,
+  });
+
+  const { signup, loginWithGoogle } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      return setError('Passwords do not match');
-    }
-
     try {
       setError('');
       setLoading(true);
-      await signup(email, password);
+      await signup(email, password, name);
       navigate('/dashboard');
-    } catch (error) {
-      setError('Failed to create account: ' + error.message);
+    } catch (err) {
+      setError('Failed to create account: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function handleGoogleSignup() {
@@ -37,472 +56,320 @@ function Signup() {
       setLoading(true);
       await loginWithGoogle();
       navigate('/dashboard');
-    } catch (error) {
-      setError('Failed to sign up with Google: ' + error.message);
+    } catch (err) {
+      setError('Google signup failed: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
-  async function handleGitHubSignup() {
-    try {
-      setError('');
-      setLoading(true);
-      await loginWithGitHub();
-      navigate('/dashboard');
-    } catch (error) {
-      setError('Failed to sign up with GitHub: ' + error.message);
-    }
-
-    setLoading(false);
-  }
+  const containerClass = `auth-container ${theme || 'light'}`;
 
   return (
-    <div className="signup-page" style={{
-      background: '#000000',
-      fontFamily: "'Poppins', sans-serif",
-      minHeight: '100vh'
-    }}>
-      <Container fluid className="d-flex align-items-center" style={{ minHeight: '100vh', padding: '1rem 1rem' }}>
-        <Row className="w-100">
-          <Col xs={12}>
-            <div className="d-flex flex-column flex-lg-row" style={{ gap: '2rem' }}>
-              {/* Right Column - Background Image/Illustration */}
-              <Col xs={12} lg={6} className="d-none d-lg-block p-0">
-                <div
-                  className="rounded-4 h-100 position-relative overflow-hidden shadow-lg"
-                  style={{
-                    background: 'linear-gradient(45deg, #2c3e50 0%, #000000 100%)',
-                    minHeight: '500px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '2rem'
-                  }}
-                >
-                  <div className="text-center" style={{ zIndex: 2, maxWidth: '400px' }}>
-                    <div className="mb-4">
-                      <div className="auth-icon-container mx-auto mb-4" style={{
-                        width: '120px',
-                        height: '120px',
-                        borderRadius: '50%',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '2px solid rgba(255, 255, 255, 0.3)'
-                      }}>
-                        <i className="bi bi-person-plus text-white" style={{ fontSize: '3rem' }}></i>
-                      </div>
-                    </div>
-                    <h2 className="text-white fw-bold mb-3" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Create Account</h2>
-                    <p className="text-white opacity-85 mb-0" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                      Join our platform with secure authentication. Create your account and unlock premium features.
-                    </p>
-                    <div className="mt-5">
-                      <div className="d-flex justify-content-center gap-4">
-                        <div className="auth-method-card" style={{
-                          background: 'rgba(255, 255, 255, 0.2)',
-                          backdropFilter: 'blur(10px)',
-                          borderRadius: '12px',
-                          padding: '1rem',
-                          border: '1px solid rgba(255, 255, 255, 0.3)'
-                        }}>
-                          <i className="bi bi-shield-lock text-white fs-4 d-block mb-1"></i>
-                          <small className="text-white opacity-75">Secure</small>
-                        </div>
-                        <div className="auth-method-card" style={{
-                          background: 'rgba(255, 255, 255, 0.2)',
-                          backdropFilter: 'blur(10px)',
-                          borderRadius: '12px',
-                          padding: '1rem',
-                          border: '1px solid rgba(255, 255, 255, 0.3)'
-                        }}>
-                          <i className="bi bi-person-plus text-white fs-4 d-block mb-1"></i>
-                          <small className="text-white opacity-75">Easy</small>
-                        </div>
-                        <div className="auth-method-card" style={{
-                          background: 'rgba(255, 255, 255, 0.2)',
-                          backdropFilter: 'blur(10px)',
-                          borderRadius: '12px',
-                          padding: '1rem',
-                          border: '1px solid rgba(255, 255, 255, 0.3)'
-                        }}>
-                          <i className="bi bi-stars text-white fs-4 d-block mb-1"></i>
-                          <small className="text-white opacity-75">Premium</small>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+    <div className={containerClass}>
+      {/* Animated Background Elements */}
+      <div className="auth-background-elements">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="auth-floating-element"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+            }}
+            transition={{
+              duration: Math.random() * 3 + 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
 
-                  {/* Animated background elements */}
-                  <div className="floating-element" style={{
-                    position: 'absolute',
-                    top: '25%',
-                    right: '15%',
-                    width: '50px',
-                    height: '50px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '50%',
-                    animation: 'float 7s ease-in-out infinite'
-                  }}></div>
-                  <div className="floating-element" style={{
-                    position: 'absolute',
-                    bottom: '20%',
-                    left: '20%',
-                    width: '70px',
-                    height: '70px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '50%',
-                    animation: 'float 9s ease-in-out infinite 1s'
-                  }}></div>
-                </div>
-              </Col>
+      <div className="auth-wrapper">
+        <div className="auth-grid">
+          {/* Theme Toggle */}
+          <div className="auth-theme-toggle">
+            <button onClick={toggleTheme} aria-label="Toggle theme">
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
 
-              {/* Left Column - Form */}
-              <Col xs={12} lg={6} className="p-0">
-                <Card className="border-0 rounded-4 shadow-xl h-100" style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  maxWidth: '450px',
-                  minWidth: '350px',
-                  minHeight: '550px'
-                }}>
-                  <Card.Body className="p-3 d-flex flex-column">
-                    <div className="text-center mb-2">
-                      <div className="logo-placeholder mb-2" style={{
-                        width: '50px',
-                        height: '50px',
-                        margin: '0 auto 0.25rem',
-                        background: 'linear-gradient(45deg, #f093fb, #f5576c)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)'
-                      }}>
-                        <i className="bi bi-person-plus text-white" style={{ fontSize: '1.25rem' }}></i>
-                      </div>
-                      <h2 className="fw-bold text-gray-800 mb-1" style={{ fontSize: '1.35rem' }}>Create Account</h2>
-                      <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>Sign up for a new account</p>
-                    </div>
+          {/* Left Panel - Promotional / Branding */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="auth-left-panel"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+              className="auth-icon-container"
+            >
+              <Sparkles size={40} />
+            </motion.div>
 
-                    {error && (
-                      <Alert variant="danger" className="rounded-3 py-2" style={{ backdropFilter: 'blur(5px)', fontSize: '0.85rem' }}>
-                        {error}
-                      </Alert>
-                    )}
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="auth-title"
+            >
+              Join Us Today
+            </motion.h2>
 
-                    <Form onSubmit={handleSubmit} className="mb-2">
-                      <Form.Group className="mb-2" controlId="email">
-                        <Form.Label className="fw-semibold text-gray-700 mb-1" style={{ fontSize: '0.85rem' }}>Email Address</Form.Label>
-                        <Form.Control
-                          type="email"
-                          placeholder="Enter your email address"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          className="rounded-3 py-2 px-3 border-0 shadow-sm"
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(5px)',
-                            border: '1px solid rgba(0, 0, 0, 0.1)',
-                            fontSize: '0.95rem'
-                          }}
-                        />
-                      </Form.Group>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="auth-subtitle"
+            >
+              Create an account to get started
+            </motion.p>
 
-                      <Form.Group className="mb-2" controlId="password">
-                        <Form.Label className="fw-semibold text-gray-700 mb-1" style={{ fontSize: '0.85rem' }}>Password</Form.Label>
-                        <Form.Control
-                          type="password"
-                          placeholder="Create a strong password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          className="rounded-3 py-2 px-3 border-0 shadow-sm"
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(5px)',
-                            border: '1px solid rgba(0, 0, 0, 0.1)',
-                            fontSize: '0.95rem'
-                          }}
-                        />
-                      </Form.Group>
+            {/* Feature Highlights */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="auth-features"
+            >
+              <div className="auth-feature-item">
+                <Star className="auth-feature-icon" />
+                <span>Premium Features</span>
+              </div>
+              <div className="auth-feature-item">
+                <ShieldCheck className="auth-feature-icon" />
+                <span>Secure Access</span>
+              </div>
+              <div className="auth-feature-item">
+                <Zap className="auth-feature-icon" />
+                <span>Lightning Fast</span>
+              </div>
+            </motion.div>
+          </motion.div>
 
-                      <Form.Group className="mb-2" controlId="confirmPassword">
-                        <Form.Label className="fw-semibold text-gray-700 mb-1" style={{ fontSize: '0.85rem' }}>Confirm Password</Form.Label>
-                        <Form.Control
-                          type="password"
-                          placeholder="Confirm your password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          required
-                          className="rounded-3 py-2 px-3 border-0 shadow-sm"
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(5px)',
-                            border: '1px solid rgba(0, 0, 0, 0.1)',
-                            fontSize: '0.95rem'
-                          }}
-                        />
-                      </Form.Group>
+          {/* Right Panel - Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="auth-right-panel"
+          >
+            <div className="auth-header">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                className="auth-icon-container"
+              >
+                <Sparkles size={32} />
+              </motion.div>
 
-                      <div className="mb-2">
-                        <Form.Check
-                          type="checkbox"
-                          id="terms"
-                          label={
-                            <span className="text-gray-600" style={{ fontSize: '0.85rem' }}>
-                              I agree to the <Link to="/terms" className="text-decoration-none text-primary fw-semibold">Terms of Service</Link> and <Link to="/privacy" className="text-decoration-none text-primary fw-semibold">Privacy Policy</Link>
-                            </span>
-                          }
-                          required
-                        />
-                      </div>
+              <motion.h1
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="auth-title"
+              >
+                Create Account
+              </motion.h1>
 
-                      <Button
-                        disabled={loading}
-                        type="submit"
-                        className="w-100 py-2 fw-semibold rounded-3 shadow-sm"
-                        style={{
-                          background: 'linear-gradient(45deg, #f093fb, #f5576c)',
-                          border: 'none',
-                          fontSize: '1rem',
-                          fontWeight: '600',
-                          transition: 'transform 0.2s, box-shadow 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = '0 8px 25px rgba(240, 147, 251, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 4px 15px rgba(240, 147, 251, 0.3)';
-                        }}
-                      >
-                        {loading ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Creating account...
-                          </>
-                        ) : (
-                          'Sign Up'
-                        )}
-                      </Button>
-                    </Form>
-
-                    <div className="divider-or mb-2" style={{
-                      textAlign: 'center',
-                      position: 'relative',
-                      margin: '0.75rem 0'
-                    }}>
-                      <span className="bg-white px-3 text-gray-500" style={{
-                        position: 'relative',
-                        zIndex: 1,
-                        fontSize: '0.8rem'
-                      }}>
-                        Or sign up with
-                      </span>
-                      <hr style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '0',
-                        right: '0',
-                        height: '1px',
-                        backgroundColor: '#e9ecef',
-                        margin: 0
-                      }} />
-                    </div>
-
-                    <div className="d-grid gap-2 mb-2">
-                      <Button
-                        onClick={handleGoogleSignup}
-                        disabled={loading}
-                        variant="light"
-                        className="py-2 rounded-3 shadow-sm fw-semibold d-flex align-items-center justify-content-center"
-                        style={{
-                          border: '1px solid #e9ecef',
-                          transition: 'transform 0.2s, box-shadow 0.2s',
-                          fontSize: '0.95rem'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = 'translateY(-1px)';
-                          e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
-                        }}
-                      >
-                        <i className="bi bi-google text-danger me-2" style={{ fontSize: '1.1rem' }}></i>
-                        Sign up with Google
-                      </Button>
-
-                      <Button
-                        onClick={handleGitHubSignup}
-                        disabled={loading}
-                        variant="dark"
-                        className="py-2 rounded-3 shadow-sm fw-semibold d-flex align-items-center justify-content-center"
-                        style={{
-                          transition: 'transform 0.2s, box-shadow 0.2s',
-                          fontSize: '0.95rem'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = 'translateY(-1px)';
-                          e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
-                        }}
-                      >
-                        <i className="bi bi-github me-2" style={{ fontSize: '1.1rem' }}></i>
-                        Sign up with GitHub
-                      </Button>
-                    </div>
-
-                    <div className="text-center mt-1">
-                      <p className="mb-0 text-gray-600" style={{ fontSize: '0.85rem' }}>
-                        Already have an account?{' '}
-                        <Link to="/login" className="text-decoration-none fw-semibold" style={{ color: '#f093fb' }}>
-                          Sign In
-                        </Link>
-                      </p>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="auth-subtitle"
+              >
+                Join us to create amazing resumes
+              </motion.p>
             </div>
-          </Col>
-        </Row>
-      </Container>
 
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="auth-error-container"
+              >
+                <p className="auth-error-text">
+                  <svg
+                    className="auth-w-4 auth-h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {error}
+                </p>
+              </motion.div>
+            )}
 
-        .signup-page {
-          position: relative;
-          overflow: hidden;
-        }
+            <form onSubmit={handleSubmit} className="auth-form">
+              <div className="auth-input-group">
+                {/* Name */}
+                <div className="relative">
+                  <label htmlFor="name" className="auth-label">
+                    <User size={16} /> Full Name
+                  </label>
+                  <div className="auth-input-container">
+                    <div
+                      className={`auth-input-icon ${isFocused.name ? 'focused' : ''}`}
+                    >
+                      <User size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      onFocus={() => setIsFocused((prev) => ({ ...prev, name: true }))}
+                      onBlur={() => setIsFocused((prev) => ({ ...prev, name: false }))}
+                      required
+                      placeholder="Enter your full name"
+                      className="auth-input"
+                    />
+                  </div>
+                </div>
 
-        .floating-element {
-          pointer-events: none;
-        }
+                {/* Email */}
+                <div className="relative">
+                  <label htmlFor="email" className="auth-label">
+                    <Mail size={16} /> Email Address
+                  </label>
+                  <div className="auth-input-container">
+                    <div
+                      className={`auth-input-icon ${isFocused.email ? 'focused' : ''}`}
+                    >
+                      <Mail size={20} />
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setIsFocused((prev) => ({ ...prev, email: true }))}
+                      onBlur={() => setIsFocused((prev) => ({ ...prev, email: false }))}
+                      required
+                      placeholder="Enter your email"
+                      className="auth-input"
+                    />
+                  </div>
+                </div>
 
-        .text-gray-800 {
-          color: #374151 !important;
-        }
+                {/* Password */}
+                <div className="relative">
+                  <label htmlFor="password" className="auth-label">
+                    <Lock size={16} /> Password
+                  </label>
+                  <div className="auth-input-container">
+                    <div
+                      className={`auth-input-icon ${isFocused.password ? 'focused' : ''}`}
+                    >
+                      <Lock size={20} />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setIsFocused((prev) => ({ ...prev, password: true }))}
+                      onBlur={() => setIsFocused((prev) => ({ ...prev, password: false }))}
+                      required
+                      minLength={6}
+                      placeholder="Enter your password"
+                      className="auth-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="auth-password-toggle"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-        .text-gray-700 {
-          color: #4b5563 !important;
-        }
+              <div className="auth-terms-container">
+                <input type="checkbox" id="terms" required className="auth-checkbox" />
+                <label htmlFor="terms" className="auth-terms-label">
+                  I agree to the{' '}
+                  <Link to="/terms" className="auth-terms-link">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" className="auth-terms-link">
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
 
-        .text-gray-600 {
-          color: #6b7280 !important;
-        }
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                className="auth-submit-button"
+              >
+                {loading ? (
+                  <>
+                    <div className="auth-spinner mr-2" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight size={16} className="ml-2" />
+                  </>
+                )}
+              </motion.button>
+            </form>
 
-        .text-gray-500 {
-          color: #9ca3af !important;
-        }
+            <div className="auth-divider">
+              <div className="auth-divider-line" />
+              <span className="auth-divider-text">or continue with</span>
+              <div className="auth-divider-line" />
+            </div>
 
-        .text-lg {
-          font-size: 1.125rem;
-        }
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleGoogleSignup}
+              disabled={loading}
+              className="auth-social-button"
+            >
+              <FcGoogle size={24} />
+              <span>Continue with Google</span>
+            </motion.button>
 
-        /* Mobile Responsiveness */
-        @media (max-width: 992px) {
-          .d-flex.flex-column.flex-lg-row {
-            flex-direction: column !important;
-          }
-
-          .col-12.col-lg-6.p-0 {
-            width: 100% !important;
-          }
-
-          .d-none.d-lg-block.p-0 {
-            display: none !important;
-          }
-
-          .card.h-100 {
-            min-height: auto !important;
-            margin-bottom: 2rem;
-          }
-
-          .p-3 {
-            padding: 1.5rem !important;
-          }
-
-          .logo-placeholder {
-            width: 45px !important;
-            height: 45px !important;
-          }
-
-          .logo-placeholder i {
-            font-size: 1.1rem !important;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .container-fluid {
-            padding: 1rem !important;
-          }
-
-          h2.fw-bold.text-gray-800 {
-            font-size: 1.35rem !important;
-          }
-
-          .btn.py-2 {
-            padding: 0.6rem 1rem !important;
-          }
-
-          .form-control.py-2.px-3 {
-            padding: 0.6rem 0.85rem !important;
-          }
-
-          .auth-icon-container {
-            width: 80px !important;
-            height: 80px !important;
-          }
-
-          .auth-icon-container i {
-            font-size: 2rem !important;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .row {
-            margin: 0 !important;
-          }
-
-          .col-12 {
-            padding: 0.5rem !important;
-          }
-
-          .card-body {
-            padding: 1rem !important;
-          }
-
-          .btn.w-100.py-2 {
-            padding: 0.5rem 1rem !important;
-          }
-
-          .d-flex.justify-content-between.align-items-center {
-            flex-direction: column !important;
-            gap: 0.5rem !important;
-            align-items: flex-start !important;
-          }
-
-          .d-grid.gap-2.mb-3 {
-            gap: 0.6rem !important;
-          }
-        }
-      `}</style>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="auth-footer"
+            >
+              <p className="auth-footer-text">
+                Already have an account?{' '}
+                <Link to="/login" className="auth-link">
+                  Sign in
+                </Link>
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
