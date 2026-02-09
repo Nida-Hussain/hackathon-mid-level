@@ -1,0 +1,764 @@
+/* Tailwind-inspired utility classes for resume creation page */
+
+/* Background with vibrant gradient */
+.create-resume-bg {
+  @apply min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden flex items-center justify-center p-4;
+}
+
+/* Decorative background elements */
+.create-resume-bg::before {
+  @apply content-[''] absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(255,255,255,0.1)_0%,transparent_40%),radial-gradient(circle_at_90%_80%,rgba(255,255,255,0.1)_0%,transparent_40%)] pointer-events-none;
+}
+
+.create-resume-bg::after {
+  @apply content-[''] absolute -top-1/2 -left-1/2 -right-1/2 -bottom-1/2 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.06)_10px,rgba(255,255,255,0.06)_20px)] animate-slide pointer-events-none;
+}
+
+/* Enhanced Navbar with Glass Effect */
+.create-resume-navbar {
+  @apply sticky top-0 z-50 bg-white/10 backdrop-blur-xl border-b border-white/20 shadow-xl bg-gradient-to-r from-slate-800/90 to-slate-900/90 w-full max-w-6xl rounded-b-3xl;
+}
+
+.create-resume-nav-container {
+  @apply max-w-6xl mx-auto px-6 flex justify-between items-center relative;
+}
+
+.create-resume-nav-container::before {
+  @apply content-[''] absolute -bottom-4 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full opacity-70;
+}
+
+/* Brand and Actions */
+.create-resume-brand-icon {
+  @apply w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl;
+}
+
+.create-resume-input {
+  @apply bg-white/10 backdrop-blur-sm border border-white/25 rounded-2xl text-white py-3.5 px-4 transition-all duration-300 text-sm w-full max-w-[200px] placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/15 focus:border-indigo-400 shadow-sm;
+}
+
+.create-resume-select {
+  @apply bg-white/10 backdrop-blur-sm border border-white/25 rounded-2xl text-white py-3.5 px-4 transition-all duration-300 text-sm appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e')] bg-no-repeat bg-right pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/15 focus:border-indigo-400 shadow-sm;
+}
+
+/* Buttons */
+.create-resume-btn {
+  @apply bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white py-3.5 px-5 transition-all duration-300 cursor-pointer inline-flex items-center gap-2 font-medium tracking-wide relative overflow-hidden hover:bg-white/20 hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:shadow-lg;
+}
+
+.create-resume-btn::before {
+  @apply content-[''] absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-500;
+}
+
+.create-resume-btn:hover::before {
+  @apply left-[100%];
+}
+
+.create-resume-btn-save {
+  @apply bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30;
+}
+
+.create-resume-btn-export {
+  @apply bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30;
+}
+
+.create-resume-btn-preview {
+  @apply bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30;
+}
+
+/* Status indicators */
+.create-resume-status {
+  @apply text-sm text-white/80 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 ml-2;
+}
+
+.create-resume-status.success {
+  @apply text-emerald-400 bg-emerald-500/10 border border-emerald-500/30;
+}
+
+.create-resume-status.error {
+  @apply text-rose-400 bg-rose-500/10 border border-rose-500/30;
+}
+
+/* Main Content Layout */
+.create-resume-main {
+  @apply flex flex-col lg:flex-row h-[calc(100vh-7rem)] overflow-hidden max-w-7xl mx-auto w-full rounded-3xl overflow-hidden shadow-2xl bg-white/5 backdrop-blur-sm border border-white/10;
+}
+
+/* Sidebar Styles */
+.create-resume-sidebar {
+  @apply w-full lg:w-80 bg-slate-800/85 backdrop-blur-xl border-b lg:border-r border-white/10 p-7 flex flex-col overflow-y-auto bg-gradient-to-b from-slate-800/95 to-slate-900/95 lg:h-auto rounded-r-3xl;
+}
+
+.create-resume-sidebar.open {
+  @apply h-80 lg:h-auto;
+}
+
+.create-resume-sidebar::before {
+  @apply content-[''] absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full;
+}
+
+.create-resume-sidebar-header {
+  @apply mb-7 pb-5 border-b border-white/10;
+}
+
+.create-resume-sidebar-title {
+  @apply text-xl font-bold text-white flex items-center gap-3;
+}
+
+.create-resume-sidebar-subtitle {
+  @apply text-sm text-white/70 leading-6;
+}
+
+/* Progress Bar */
+.create-resume-progress-container {
+  @apply w-full h-2.5 bg-white/10 rounded-full overflow-hidden;
+}
+
+.create-resume-progress-bar {
+  @apply h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500;
+}
+
+/* Navigation Items */
+.create-resume-nav-list {
+  @apply flex flex-col gap-3 flex-1 pt-3;
+}
+
+.create-resume-nav-item {
+  @apply flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 cursor-pointer relative overflow-hidden bg-white/5 border border-white/8 mb-2 hover:bg-white/10 hover:translate-x-1;
+}
+
+.create-resume-nav-item.active {
+  @apply bg-gradient-to-r from-indigo-600/30 to-purple-600/30 text-white border border-indigo-500/40 shadow-lg shadow-indigo-500/20 translate-x-1;
+}
+
+.create-resume-nav-icon {
+  @apply w-6 h-6 flex items-center justify-center text-white/80;
+}
+
+.create-resume-nav-item.active .create-resume-nav-icon {
+  @apply text-white;
+}
+
+.create-resume-nav-label {
+  @apply font-medium text-white/90 text-base;
+}
+
+.create-resume-nav-item.active .create-resume-nav-label {
+  @apply text-white font-semibold;
+}
+
+.create-resume-nav-progress {
+  @apply flex items-center gap-3 mt-2;
+}
+
+.create-resume-nav-progress-container {
+  @apply flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden relative;
+}
+
+.create-resume-nav-progress-bar {
+  @apply h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500 min-w-0;
+}
+
+.create-resume-nav-progress-text {
+  @apply text-xs text-white/70 min-w-[36px] text-right font-medium;
+}
+
+.create-resume-nav-item.active .create-resume-nav-progress-text.complete {
+  @apply text-emerald-400;
+}
+
+.create-resume-nav-item.active .create-resume-nav-progress-text.in-progress {
+  @apply text-amber-400;
+}
+
+.create-resume-nav-item.active .create-resume-nav-progress-text.not-started {
+  @apply text-slate-400;
+}
+
+/* Main Editor Area */
+.create-resume-editor {
+  @apply flex-1 p-7 overflow-y-auto bg-white/5 backdrop-blur-sm w-full;
+}
+
+.create-resume-editor-grid {
+  @apply grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 max-w-7xl mx-auto w-full;
+}
+
+/* Form Section */
+.create-resume-form-section {
+  @apply flex flex-col gap-7;
+}
+
+.create-resume-form-section > * {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.create-resume-form-section > *:hover {
+  @apply shadow-lg;
+}
+
+.create-resume-card {
+  @apply bg-white/8 backdrop-blur-xl border border-white/15 rounded-3xl shadow-2xl transition-all duration-500 relative overflow-hidden p-6 opacity-0 translate-y-5 animate-fadeIn hover:shadow-2xl hover:scale-[1.01];
+}
+
+.create-resume-card::before {
+  @apply content-[''] absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 transition-opacity duration-300;
+}
+
+.create-resume-card::after {
+  @apply content-[''] absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-rose-500 opacity-0 transition-opacity duration-300;
+}
+
+.create-resume-card:hover::before,
+.create-resume-card:hover::after {
+  @apply opacity-100;
+}
+
+.create-resume-card.personal::before {
+  @apply bg-gradient-to-r from-blue-500 to-indigo-600;
+}
+
+.create-resume-card.education::before {
+  @apply bg-gradient-to-r from-violet-500 to-purple-500;
+}
+
+.create-resume-card.experience::before {
+  @apply bg-gradient-to-r from-pink-500 to-rose-500;
+}
+
+.create-resume-card.skills::before {
+  @apply bg-gradient-to-r from-emerald-500 to-green-500;
+}
+
+.create-resume-card.projects::before {
+  @apply bg-gradient-to-r from-amber-500 to-yellow-500;
+}
+
+.create-resume-card.certifications::before {
+  @apply bg-gradient-to-r from-blue-400 to-cyan-500;
+}
+
+.create-resume-card.summary::before {
+  @apply bg-gradient-to-r from-emerald-400 to-teal-500;
+}
+
+.create-resume-card:nth-child(1) { animation-delay: 0.1s; }
+.create-resume-card:nth-child(2) { animation-delay: 0.2s; }
+.create-resume-card:nth-child(3) { animation-delay: 0.3s; }
+.create-resume-card:nth-child(4) { animation-delay: 0.4s; }
+.create-resume-card:nth-child(5) { animation-delay: 0.5s; }
+.create-resume-card:nth-child(6) { animation-delay: 0.6s; }
+.create-resume-card:nth-child(7) { animation-delay: 0.7s; }
+
+.create-resume-card:hover {
+  @apply -translate-y-2 scale-[1.02] shadow-2xl bg-white/10;
+}
+
+.create-resume-card-header {
+  @apply flex justify-between items-center mb-7 p-3 rounded-xl bg-gradient-to-r from-white/10 to-transparent;
+}
+
+.create-resume-card-title {
+  @apply text-xl font-semibold text-white flex items-center gap-3;
+}
+
+.create-resume-add-btn {
+  @apply bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-indigo-400/30 rounded-2xl text-white py-2.5 px-4 transition-all duration-300 inline-flex items-center gap-2 relative overflow-hidden hover:from-indigo-500/30 hover:to-purple-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:scale-105;
+}
+
+.create-resume-add-btn::before {
+  @apply content-[''] absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-500;
+}
+
+.create-resume-add-btn:hover::before {
+  @apply left-[100%];
+}
+
+/* Form Elements */
+.create-resume-form-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6 mb-5 p-4 rounded-2xl bg-gradient-to-br from-white/5 to-transparent;
+}
+
+.create-resume-form-row {
+  @apply flex flex-wrap gap-6 p-3 rounded-xl bg-gradient-to-r from-white/5 to-transparent;
+}
+
+.create-resume-form-row .create-resume-form-field {
+  @apply flex-1 min-w-[250px];
+}
+
+.create-resume-form-field {
+  @apply flex flex-col mb-6 p-3 rounded-xl bg-gradient-to-br from-white/5 to-transparent;
+}
+
+.create-resume-form-label {
+  @apply block text-sm font-medium text-white/90 mb-3 flex items-center gap-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 px-3 py-1.5 rounded-lg;
+}
+
+.create-resume-form-label.required::after {
+  @apply content-['*'] text-rose-400 text-lg;
+}
+
+.create-resume-form-input {
+  @apply w-full bg-white/10 backdrop-blur-sm border border-white/25 rounded-2xl text-white py-4 px-5 transition-all duration-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/15 focus:border-indigo-400 focus:-translate-y-0.5 placeholder:text-white/50 shadow-sm hover:shadow-md;
+}
+
+.create-resume-form-textarea {
+  @apply w-full bg-white/10 backdrop-blur-sm border border-white/25 rounded-2xl text-white py-4 px-5 transition-all duration-300 text-sm resize-y min-h-32 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/15 focus:border-indigo-400 focus:-translate-y-0.5 placeholder:text-white/50 shadow-sm hover:shadow-md;
+}
+
+.create-resume-form-select {
+  @apply w-full bg-white/10 backdrop-blur-sm border border-white/25 rounded-2xl text-white py-4 px-5 transition-all duration-300 text-sm appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e')] bg-no-repeat bg-right pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/15 focus:border-indigo-400 focus:-translate-y-0.5 shadow-sm hover:shadow-md;
+}
+
+/* Item List Styles */
+.create-resume-item {
+  @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl transition-all duration-300 relative overflow-hidden p-5 mb-5 opacity-0 translate-x-[-20px] animate-fadeIn shadow-sm hover:shadow-xl hover:scale-[1.02];
+}
+
+.create-resume-item:nth-child(1) { animation-delay: 0.1s; }
+.create-resume-item:nth-child(2) { animation-delay: 0.2s; }
+.create-resume-item:nth-child(3) { animation-delay: 0.3s; }
+.create-resume-item:nth-child(4) { animation-delay: 0.4s; }
+
+.create-resume-item:hover {
+  @apply bg-white/8 -translate-y-1.5 shadow-xl shadow-black/15;
+}
+
+.create-resume-remove-btn {
+  @apply absolute top-3 right-3 bg-gradient-to-r from-rose-500/30 to-pink-500/30 border border-rose-500/40 text-rose-200 rounded-xl p-2.5 transition-all duration-300 cursor-pointer z-10 hover:from-rose-500/40 hover:to-pink-500/40 hover:text-rose-100 hover:scale-110 hover:rotate-90 hover:shadow-xl hover:shadow-rose-500/40 hover:-translate-y-0.5;
+}
+
+/* Live Preview */
+.create-resume-preview {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden transition-all duration-300 shadow-2xl flex flex-col border-t-2 border-indigo-500/30 border-l border-r bg-white/10 hover:shadow-2xl;
+}
+
+.create-resume-preview::before {
+  @apply content-[''] absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-80;
+}
+
+.create-resume-preview-header {
+  @apply bg-gradient-to-r from-blue-500/20 to-purple-600/20 p-5 border-b border-white/10 flex justify-between items-center relative rounded-t-3xl backdrop-blur-sm;
+}
+
+.create-resume-preview-header::after {
+  @apply content-[''] absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent;
+}
+
+.create-resume-preview-title {
+  @apply text-lg font-semibold text-white flex items-center gap-3;
+}
+
+.create-resume-preview-actions {
+  @apply flex gap-3;
+}
+
+.zoom-btn {
+  @apply bg-white/15 border border-white/20 text-white rounded-xl py-2 px-3 cursor-pointer transition-all duration-200 text-sm min-w-[40px] hover:bg-white/25 hover:-translate-y-0.5 shadow-sm;
+}
+
+.zoom-btn.active,
+.zoom-btn:active {
+  @apply bg-indigo-500/80 border border-indigo-500/90 shadow-[0_0_0_3px_rgba(99,102,241,0.4)];
+}
+
+.create-resume-preview-content {
+  @apply p-5 bg-white/5 max-h-[calc(100vh-200px)] overflow-y-auto flex-1 rounded-b-3xl;
+}
+
+.create-resume-preview-scale {
+  @apply transition-transform duration-300 flex justify-center;
+}
+
+.create-resume-preview-scale.zoom-75 {
+  @apply scale-75 w-[133%];
+}
+
+.create-resume-preview-scale.zoom-90 {
+  @apply scale-90 w-[111%];
+}
+
+.create-resume-preview-scale.zoom-100 {
+  @apply scale-100 w-full;
+}
+
+.create-resume-preview-scale.zoom-110 {
+  @apply scale-110 w-[91%];
+}
+
+/* Resume Preview Paper */
+.create-resume-preview-paper {
+  @apply bg-white p-8 shadow-2xl min-h-[842px] w-[595px] mx-auto rounded-2xl transition-all duration-300 hover:shadow-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-lg;
+}
+
+.create-resume-preview-header-section {
+  @apply border-b-2 border-indigo-200 pb-6 mb-8 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-5 rounded-t-xl shadow-sm;
+}
+
+.create-resume-preview-name {
+  @apply text-4xl font-extrabold text-gray-900 mb-1 tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+.create-resume-preview-title-role {
+  @apply text-xl font-semibold text-indigo-700 mb-4 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent;
+}
+
+.create-resume-preview-contact {
+  @apply flex flex-wrap gap-4 text-sm text-gray-600 mt-4;
+}
+
+.create-resume-preview-contact span {
+  @apply flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 px-3.5 py-2 rounded-full border border-indigo-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200;
+}
+
+.create-resume-preview-contact span::before {
+  @apply content-[''] w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500;
+}
+
+.create-resume-preview-section {
+  @apply mb-10 p-5 rounded-xl bg-gradient-to-br from-gray-25 to-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+.create-resume-preview-section-title {
+  @apply text-xl font-bold mb-4 border-b-2 pb-2 text-indigo-700 border-indigo-300 relative;
+}
+
+.create-resume-preview-section-title::before {
+  @apply content-[''] absolute top-0 left-0 w-16 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full;
+}
+
+.create-resume-preview-item {
+  @apply mb-6 p-4 rounded-lg bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-sm;
+}
+
+.create-resume-preview-item-title {
+  @apply font-bold text-gray-900 text-lg text-indigo-800 flex items-center;
+}
+
+.create-resume-preview-item-title::before {
+  @apply content-['▶'] text-indigo-500 mr-3 text-sm;
+}
+
+.create-resume-preview-item-subtitle {
+  @apply text-gray-600 font-medium text-base italic flex items-center;
+}
+
+.create-resume-preview-item-subtitle::before {
+  @apply content-['•'] text-indigo-400 mr-2;
+}
+
+.create-resume-preview-item-dates {
+  @apply text-sm text-gray-500 font-medium bg-gradient-to-r from-indigo-100 to-purple-100 px-3.5 py-2 rounded-lg border border-indigo-200 shadow-sm;
+}
+
+.create-resume-preview-item-description {
+  @apply text-gray-700 leading-6 mt-3 pl-5 border-l-2 border-indigo-300 text-sm;
+}
+
+.create-resume-preview-summary {
+  @apply bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 text-gray-700 leading-7 shadow-sm;
+}
+
+.create-resume-preview-skills {
+  @apply flex flex-wrap gap-3 mt-2;
+}
+
+.create-resume-preview-skill {
+  @apply bg-gradient-to-r from-indigo-100 to-purple-200 text-indigo-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm border border-indigo-200 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer;
+}
+
+/* Validation Error Styles */
+.create-resume-form-input.error {
+  @apply border-rose-500/80 bg-rose-500/10 animate-shake shadow-[0_0_0_2px_rgba(239,68,68,0.1)];
+}
+
+.create-resume-form-input.error:focus {
+  @apply border-rose-500/90 ring-rose-500/30 shadow-[0_0_0_3px_rgba(239,68,68,0.2)];
+}
+
+.create-resume-error-message {
+  @apply text-rose-400 text-sm mt-2 flex items-center gap-2 animate-fadeIn;
+}
+
+.create-resume-error-message::before {
+  @apply content-['⚠'] text-base;
+}
+
+/* Success feedback */
+.create-resume-form-input.success {
+  @apply border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_0_2px_rgba(16,185,129,0.1)];
+}
+
+.create-resume-form-input.success:focus {
+  @apply border-emerald-500/90 ring-emerald-500/30 shadow-[0_0_0_3px_rgba(16,185,129,0.2)];
+}
+
+/* Field with success indicator */
+.create-resume-form-field.success .create-resume-form-label {
+  @apply text-emerald-400;
+}
+
+.create-resume-form-field.success .create-resume-form-input {
+  @apply border-emerald-500/80;
+}
+
+/* Mobile menu button */
+.create-resume-mobile-menu-btn {
+  @apply lg:hidden bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white py-2.5 px-4 cursor-pointer text-sm transition-all duration-200 flex items-center gap-2 hover:bg-white/20 hover:-translate-y-0.5 shadow-sm;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .create-resume-editor-grid {
+    @apply grid-cols-1;
+  }
+
+  .create-resume-preview {
+    @apply mt-6;
+  }
+
+  .create-resume-preview-scale {
+    @apply scale-75 w-[133%];
+  }
+  
+  .create-resume-preview-scale.zoom-90 {
+    @apply scale-80 w-[125%];
+  }
+  
+  .create-resume-preview-scale.zoom-100 {
+    @apply scale-90 w-[111%];
+  }
+  
+  .create-resume-preview-scale.zoom-110 {
+    @apply scale-100 w-full;
+  }
+  
+  .create-resume-preview-scale.zoom-125 {
+    @apply scale-110 w-[91%];
+  }
+}
+
+@media (max-width: 768px) {
+  .create-resume-main {
+    @apply flex-col h-auto rounded-none shadow-none;
+  }
+
+  .create-resume-sidebar {
+    @apply w-full p-4 border-b;
+  }
+
+  .create-resume-editor {
+    @apply p-4;
+  }
+
+  .create-resume-editor-grid {
+    @apply grid-cols-1;
+  }
+
+  .create-resume-preview {
+    @apply mt-6;
+  }
+
+  .create-resume-preview-scale {
+    @apply scale-60 w-[167%];
+  }
+  
+  .create-resume-preview-scale.zoom-90 {
+    @apply scale-70 w-[143%];
+  }
+  
+  .create-resume-preview-scale.zoom-100 {
+    @apply scale-80 w-[125%];
+  }
+  
+  .create-resume-preview-scale.zoom-110 {
+    @apply scale-90 w-[111%];
+  }
+  
+  .create-resume-preview-scale.zoom-125 {
+    @apply scale-100 w-full;
+  }
+
+  /* Mobile-friendly form elements */
+  .create-resume-form-input,
+  .create-resume-form-textarea,
+  .create-resume-form-select {
+    @apply py-3 px-4 text-base;
+  }
+
+  /* Adjust navbar for mobile */
+  .create-resume-nav-container {
+    @apply flex-col gap-4 items-stretch;
+  }
+
+  .create-resume-nav-brand {
+    @apply justify-center;
+  }
+
+  .create-resume-nav-actions {
+    @apply flex-wrap justify-center gap-2;
+  }
+
+  .create-resume-input {
+    @apply max-w-full;
+  }
+}
+
+@media (max-width: 768px) {
+  .create-resume-mobile-menu-btn {
+    @apply flex;
+  }
+
+  .create-resume-main {
+    @apply flex-col h-auto;
+  }
+
+  .create-resume-sidebar {
+    @apply fixed top-16 left-0 h-[calc(100vh-4rem)] z-40 -translate-x-full transition-transform duration-300 w-64 p-4;
+  }
+
+  .create-resume-sidebar.open {
+    @apply translate-x-0;
+  }
+
+  .create-resume-overlay {
+    @apply hidden fixed top-0 left-0 right-0 bottom-0 bg-black/70 z-35 backdrop-blur-sm;
+  }
+
+  .create-resume-overlay.open {
+    @apply block;
+  }
+
+  .create-resume-editor {
+    @apply p-4;
+  }
+
+  .create-resume-form-grid {
+    @apply grid-cols-1;
+  }
+
+  .create-resume-preview-scale {
+    @apply scale-70 w-[143%];
+  }
+  
+  .create-resume-preview-scale.zoom-90 {
+    @apply scale-80 w-[125%];
+  }
+  
+  .create-resume-preview-scale.zoom-100 {
+    @apply scale-90 w-[111%];
+  }
+  
+  .create-resume-preview-scale.zoom-110 {
+    @apply scale-100 w-full;
+  }
+  
+  .create-resume-preview-scale.zoom-125 {
+    @apply scale-110 w-[91%];
+  }
+
+  /* Mobile-friendly form elements */
+  .create-resume-form-input,
+  .create-resume-form-textarea,
+  .create-resume-form-select {
+    @apply py-3 px-4 text-base;
+  }
+
+  /* Adjust navbar for mobile */
+  .create-resume-nav-container {
+    @apply flex-col gap-4 items-stretch;
+  }
+
+  .create-resume-nav-brand {
+    @apply justify-center;
+  }
+
+  .create-resume-nav-actions {
+    @apply flex-wrap justify-center gap-2;
+  }
+
+  .create-resume-input {
+    @apply max-w-full;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .create-resume-navbar {
+    @apply p-3 mx-2 mb-4;
+  }
+
+  .create-resume-nav-actions {
+    @apply flex-col items-stretch;
+  }
+
+  .create-resume-btn {
+    @apply justify-center py-3;
+  }
+
+  .create-resume-preview-scale {
+    @apply scale-60 w-[167%];
+  }
+  
+  .create-resume-preview-scale.zoom-90 {
+    @apply scale-70 w-[143%];
+  }
+  
+  .create-resume-preview-scale.zoom-100 {
+    @apply scale-80 w-[125%];
+  }
+  
+  .create-resume-preview-scale.zoom-110 {
+    @apply scale-90 w-[111%];
+  }
+  
+  .create-resume-preview-scale.zoom-125 {
+    @apply scale-100 w-full;
+  }
+
+  .create-resume-card {
+    @apply p-5;
+  }
+
+  .create-resume-form-grid {
+    @apply gap-5;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.animate-fadeIn {
+  @apply animate-[fadeIn_0.5s_forwards];
+}
+
+.animate-slideIn {
+  @apply animate-[slideIn_0.4s_forwards];
+}
+
+.animate-shake {
+  @apply animate-[shake_0.5s_ease-in-out];
+}
+
+.animate-slide {
+  @apply animate-[slide_20s_linear_infinite];
+}

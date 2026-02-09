@@ -35,10 +35,14 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { db } from '../firebase';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Navbar from '../components/Navbar';
+
+// Import the custom CSS for the resume creation page
+import '../styles/resume-create-enhanced.css';
 
 function CreateResume() {
   const { id } = useParams();
-  const { currentUser } = useAuth();
+  const { currentUser, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [resumeData, setResumeData] = useState({
@@ -60,29 +64,181 @@ function CreateResume() {
     projects: [{ name: '', description: '', technologies: '', link: '' }],
     certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
   });
+  const [validationErrors, setValidationErrors] = useState({});
   const [activeSection, setActiveSection] = useState('personal');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
+  const [previewScale, setPreviewScale] = useState('75'); // Default to 75% zoom
+
+  // Check authentication state first
+  if (authLoading) {
+    return (
+      <div className="create-resume-bg d-flex-items-center-justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-white mt-4">Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="create-resume-bg d-flex-items-center-justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Access Denied</h2>
+          <p className="text-white mb-4">You must be logged in to create a resume.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="bg-gradient-linear text-white px-6 py-3 rounded-xl font-semibold d-flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            <span>Login</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Calculate completion percentage for each section
+  const calculateCompletion = (section) => {
+    // Ensure resumeData and its properties exist before accessing
+    if (!resumeData) return 0;
+    
+    if (section === 'personal') {
+      const personalInfo = resumeData.personalInfo || {};
+      const { fullName, email } = personalInfo;
+      const requiredFields = [fullName, email];
+      const filledFields = requiredFields.filter(field => field && field.trim() !== '');
+      return Math.round((filledFields.length / requiredFields.length) * 100);
+    }
+    
+    if (section === 'education') {
+      const education = resumeData.education || [];
+      const filledEducations = education.filter(edu => 
+        edu.institution || edu.degree || edu.fieldOfStudy
+      );
+      return filledEducations.length > 0 ? 100 : 0;
+    }
+    
+    if (section === 'experience') {
+      const experience = resumeData.experience || [];
+      const filledExperiences = experience.filter(exp => 
+        exp.company || exp.position || exp.description
+      );
+      return filledExperiences.length > 0 ? 100 : 0;
+    }
+    
+    if (section === 'skills') {
+      const skills = resumeData.skills || [];
+      const filledSkills = skills.filter(skill => 
+        skill.name
+      );
+      return filledSkills.length > 0 ? 100 : 0;
+    }
+    
+    if (section === 'projects') {
+      const projects = resumeData.projects || [];
+      const filledProjects = projects.filter(project => 
+        project.name || project.description
+      );
+      return filledProjects.length > 0 ? 100 : 0;
+    }
+    
+    if (section === 'certifications') {
+      const certifications = resumeData.certifications || [];
+      const filledCerts = certifications.filter(cert => 
+        cert.name || cert.issuer
+      );
+      return filledCerts.length > 0 ? 100 : 0;
+    }
+    
+    if (section === 'summary') {
+      const personalInfo = resumeData.personalInfo || {};
+      return personalInfo.summary ? 100 : 0;
+    }
+    
+    return 0;
+  };
+  
+  // Overall completion percentage
+  const overallCompletion = () => {
+    if (!resumeData) return 0;
+    const sections = ['personal', 'education', 'experience', 'skills', 'projects', 'certifications', 'summary'];
+    const completedSections = sections.filter(section => calculateCompletion(section) > 0);
+    return Math.round((completedSections.length / sections.length) * 100);
+  };
 
   useEffect(() => {
-    if (id) {
+    if (id && currentUser) {
       loadResume();
     }
-  }, [id]);
+  }, [id, currentUser]);
 
   const loadResume = async () => {
-    if (!currentUser || !id) return;
+    if (!currentUser) {
+      console.log('No current user, cannot load resume');
+      return;
+    }
+    
+    if (!id) {
+      console.log('No resume ID provided');
+      return;
+    }
 
     try {
+      console.log(`Attempting to load resume with ID: ${id} for user: ${currentUser.uid}`);
       const docRef = doc(db, 'users', currentUser.uid, 'resumes', id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
+        console.log('Resume data loaded:', docSnap.data());
         setResumeData(docSnap.data());
+      } else {
+        console.log('Resume document does not exist');
+        // Initialize with empty data if document doesn't exist
+        setResumeData({
+          title: 'Untitled Resume',
+          templateId: 'modern',
+          personalInfo: {
+            fullName: '',
+            email: '',
+            phone: '',
+            address: '',
+            linkedin: '',
+            github: '',
+            website: '',
+            summary: ''
+          },
+          education: [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
+          experience: [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
+          skills: [{ name: '', level: 'Intermediate' }],
+          projects: [{ name: '', description: '', technologies: '', link: '' }],
+          certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
+        });
       }
     } catch (error) {
       console.error('Error loading resume:', error);
+      // Set default data in case of error
+      setResumeData({
+        title: 'Untitled Resume',
+        templateId: 'modern',
+        personalInfo: {
+          fullName: '',
+          email: '',
+          phone: '',
+          address: '',
+          linkedin: '',
+          github: '',
+          website: '',
+          summary: ''
+        },
+        education: [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
+        experience: [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
+        skills: [{ name: '', level: 'Intermediate' }],
+        projects: [{ name: '', description: '', technologies: '', link: '' }],
+        certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
+      });
     }
   };
 
@@ -110,7 +266,38 @@ function CreateResume() {
     }
   };
 
+  const validateField = (section, field, value) => {
+    const errors = { ...validationErrors };
+    
+    // Clear previous error for this field
+    delete errors[`${section}.${field}`];
+    
+    // Validation rules
+    if (section === 'personalInfo') {
+      if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
+        errors[`${section}.${field}`] = 'Please enter a valid email address';
+      }
+      if (field === 'phone' && value && !/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-\(\)]/g, ''))) {
+        errors[`${section}.${field}`] = 'Please enter a valid phone number';
+      }
+      if (field === 'linkedin' && value && !value.startsWith('https://') && !value.startsWith('http://')) {
+        errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
+      }
+      if (field === 'github' && value && !value.startsWith('https://') && !value.startsWith('http://')) {
+        errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
+      }
+      if (field === 'website' && value && !value.startsWith('https://') && !value.startsWith('http://')) {
+        errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
+      }
+    }
+    
+    setValidationErrors(errors);
+  };
+
   const handleInputChange = (section, field, value, index = null) => {
+    // Validate the field
+    validateField(section, field, value);
+    
     if (index !== null) {
       const newArray = [...resumeData[section]];
       newArray[index] = { ...newArray[index], [field]: value };
@@ -124,6 +311,11 @@ function CreateResume() {
         }
       }));
     }
+  };
+
+  const getValidationError = (section, field) => {
+    if (!validationErrors) return null;
+    return validationErrors[`${section}.${field}`];
   };
 
   const addNewItem = (section) => {
@@ -219,11 +411,11 @@ function CreateResume() {
   ];
 
   const LivePreview = () => (
-    <div id="resume-preview" className="bg-white p-8 shadow-lg min-h-[842px] w-[595px] mx-auto">
+    <div id="resume-preview" className="create-resume-preview-paper">
       {/* Header */}
-      <div className="border-b pb-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{resumeData.personalInfo.fullName || 'Your Name'}</h1>
-        <div className="d-flex flex-wrap gap-4 text-sm text-gray-600">
+      <div className="create-resume-preview-header-section">
+        <h1 className="create-resume-preview-name">{resumeData.personalInfo.fullName || 'Your Name'}</h1>
+        <div className="create-resume-preview-contact">
           {resumeData.personalInfo.email && <span><Mail className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.email}</span>}
           {resumeData.personalInfo.phone && <span><Phone className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.phone}</span>}
           {resumeData.personalInfo.address && <span><MapPin className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.address}</span>}
@@ -233,40 +425,39 @@ function CreateResume() {
 
       {/* Summary */}
       {resumeData.personalInfo.summary && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 border-b pb-1">Summary</h2>
-          <p className="text-gray-700 leading-relaxed">{resumeData.personalInfo.summary}</p>
+        <div className="create-resume-preview-section">
+          <h2 className="create-resume-preview-section-title">Summary</h2>
+          <p className="create-resume-preview-item-description">{resumeData.personalInfo.summary}</p>
         </div>
       )}
 
       {/* Experience */}
       {resumeData.experience.filter(exp => exp.company || exp.position || exp.description).length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 border-b pb-1">Experience</h2>
+        <div className="create-resume-preview-section">
+          <h2 className="create-resume-preview-section-title">Experience</h2>
           {resumeData.experience.filter(exp => exp.company || exp.position || exp.description).map((exp, index) => (
-            <div key={index} className="mb-3">
+            <div key={index} className="create-resume-preview-item">
               <div className="d-flex justify-between items-start">
-                <h3 className="font-semibold text-gray-900">{exp.position || 'Position'}</h3>
-                <span className="text-sm text-gray-600">{exp.startDate} - {exp.endDate || 'Present'}</span>
+                <h3 className="create-resume-preview-item-title">{exp.position || 'Position'}</h3>
+                <span className="create-resume-preview-item-dates">{exp.startDate} - {exp.endDate || 'Present'}</span>
               </div>
-              <p className="text-gray-700 font-medium">{exp.company || 'Company'} • {exp.location || 'Location'}</p>
-              <p className="text-gray-700 mt-1">{exp.description || 'Description'}</p>
+              <p className="create-resume-preview-item-subtitle">{exp.company || 'Company'} • {exp.location || 'Location'}</p>
+              <p className="create-resume-preview-item-description">{exp.description || 'Description'}</p>
             </div>
           ))}
         </div>
       )}
-
-      {/* Education */}
+  
       {resumeData.education.filter(edu => edu.institution || edu.degree).length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 border-b pb-1">Education</h2>
+        <div className="create-resume-preview-section">
+          <h2 className="create-resume-preview-section-title">Education</h2>
           {resumeData.education.filter(edu => edu.institution || edu.degree).map((edu, index) => (
-            <div key={index} className="mb-3">
+            <div key={index} className="create-resume-preview-item">
               <div className="d-flex justify-between items-start">
-                <h3 className="font-semibold text-gray-900">{edu.degree || 'Degree'}</h3>
-                <span className="text-sm text-gray-600">{edu.startDate} - {edu.endDate || 'Present'}</span>
+                <h3 className="create-resume-preview-item-title">{edu.degree || 'Degree'}</h3>
+                <span className="create-resume-preview-item-dates">{edu.startDate} - {edu.endDate || 'Present'}</span>
               </div>
-              <p className="text-gray-700 font-medium">{edu.institution || 'Institution'} • {edu.fieldOfStudy || 'Field of Study'}</p>
+              <p className="create-resume-preview-item-subtitle">{edu.institution || 'Institution'} • {edu.fieldOfStudy || 'Field of Study'}</p>
               {edu.grade && <p className="text-gray-600 text-sm">Grade: {edu.grade}</p>}
             </div>
           ))}
@@ -275,11 +466,11 @@ function CreateResume() {
 
       {/* Skills */}
       {resumeData.skills.filter(skill => skill.name).length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 border-b pb-1">Skills</h2>
-          <div className="d-flex flex-wrap gap-2">
+        <div className="create-resume-preview-section">
+          <h2 className="create-resume-preview-section-title">Skills</h2>
+          <div className="create-resume-preview-skills">
             {resumeData.skills.filter(skill => skill.name).map((skill, index) => (
-              <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+              <span key={index} className="create-resume-preview-skill">
                 {skill.name} ({skill.level})
               </span>
             ))}
@@ -287,17 +478,17 @@ function CreateResume() {
         </div>
       )}
 
-      {/* Projects */}
+    
       {resumeData.projects.filter(project => project.name || project.description).length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 border-b pb-1">Projects</h2>
+        <div className="create-resume-preview-section">
+          <h2 className="create-resume-preview-section-title">Projects</h2>
           {resumeData.projects.filter(project => project.name || project.description).map((project, index) => (
-            <div key={index} className="mb-3">
+            <div key={index} className="create-resume-preview-item">
               <div className="d-flex justify-between items-start">
-                <h3 className="font-semibold text-gray-900">{project.name || 'Project Name'}</h3>
+                <h3 className="create-resume-preview-item-title">{project.name || 'Project Name'}</h3>
                 {project.link && <a href={project.link} className="text-blue-600 text-sm hover:underline">{project.link}</a>}
               </div>
-              <p className="text-gray-700 mt-1">{project.description || 'Description'}</p>
+              <p className="create-resume-preview-item-description">{project.description || 'Description'}</p>
               {project.technologies && <p className="text-gray-600 text-sm mt-1">Technologies: {project.technologies}</p>}
             </div>
           ))}
@@ -306,241 +497,296 @@ function CreateResume() {
     </div>
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-radial from-indigo-500/10 via-purple-500/10 to-pink-500/10">
-      {/* Header */}
-      <header className="navbar-glass sticky top-0 z-50 border-b border-white/20 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="d-flex justify-between items-center h-16">
-            <div className="d-flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-linear rounded-xl d-flex items-center justify-center shadow-lg">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-white">ResumeBuilder</h1>
-            </div>
 
-            <div className="d-flex items-center space-x-4">
+  return (
+    <div className={`create-resume-bg ${theme === 'dark' ? 'dark-mode' : ''}`}>
+      {/* Header */}
+      <header className={`create-resume-navbar ${theme === 'dark' ? 'dark-mode' : ''}`}>
+        <div className={`create-resume-nav-container ${theme === 'dark' ? 'dark-mode' : ''}`}>
+          <div className="create-resume-navbar-left flex items-center space-x-4 flex-shrink-0">
+            <div className="create-resume-brand-icon flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">ResumeBuilder</h1>
+              <div className="flex items-center mt-1">
+                <div className="create-resume-progress-container w-32">
+                  <div
+                    className="create-resume-progress-bar"
+                    style={{ width: `${overallCompletion()}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-white/80 ml-2 font-medium">{overallCompletion()}% Complete</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="create-resume-navbar-right flex items-center space-x-3 flex-wrap gap-2">
+            <div className="create-resume-title-container">
               <input
                 type="text"
                 value={resumeData.title}
                 onChange={(e) => handleInputChange('title', 'title', e.target.value)}
-                className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
-                placeholder="Resume Title"
+                className="create-resume-input"
+                placeholder="Enter resume title"
               />
-
-              <select
-                value={resumeData.templateId}
-                onChange={(e) => handleInputChange('templateId', 'templateId', e.target.value)}
-                className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white transition-all duration-300"
-              >
-                <option value="modern" className="bg-gray-800 text-white">Modern</option>
-                <option value="classic" className="bg-gray-800 text-white">Classic</option>
-                <option value="professional" className="bg-gray-800 text-white">Professional</option>
-              </select>
-
-              <button
-                onClick={() => toggleTheme()}
-                className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-
-              <button
-                onClick={saveResume}
-                disabled={isSaving}
-                className="btn-enhanced-primary d-flex items-center space-x-2 px-4 py-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isSaving ? 'Saving...' : 'Save'}</span>
-              </button>
-
-              <button
-                onClick={exportToPDF}
-                className="btn-enhanced bg-green-600/20 border-green-600/30 text-green-600 hover:bg-green-600/30 d-flex items-center space-x-2 px-4 py-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export PDF</span>
-              </button>
-
-              <button
-                onClick={() => navigate(`/resume/${id}`)}
-                className="btn-enhanced d-flex items-center space-x-2 px-4 py-2"
-              >
-                <Eye className="w-4 h-4" />
-                <span>Preview</span>
-              </button>
-
-              {saveStatus && (
-                <span className={`text-sm ${saveStatus.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
-                  {saveStatus}
-                </span>
-              )}
             </div>
+
+            <select
+              value={resumeData.templateId}
+              onChange={(e) => handleInputChange('templateId', 'templateId', e.target.value)}
+              className="create-resume-select"
+            >
+              <option value="modern">Modern Template</option>
+              <option value="classic">Classic Template</option>
+              <option value="professional">Professional Template</option>
+            </select>
+
+            <button
+              onClick={() => toggleTheme()}
+              className="create-resume-theme-toggle p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+
+            <button
+              onClick={saveResume}
+              disabled={isSaving}
+              className="create-resume-btn create-resume-btn-save d-flex items-center space-x-2 px-4 py-2"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? 'Saving...' : 'Save'}</span>
+            </button>
+
+            <button
+              onClick={exportToPDF}
+              className="create-resume-btn create-resume-btn-export d-flex items-center space-x-2 px-4 py-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export PDF</span>
+            </button>
+
+            <button
+              onClick={() => navigate(`/resume/${id}`)}
+              className="create-resume-btn create-resume-btn-preview d-flex items-center space-x-2 px-4 py-2"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Preview</span>
+            </button>
+
+            {saveStatus && (
+              <span className={`create-resume-status ${typeof saveStatus === 'string' && saveStatus.includes('Error') ? 'error' : typeof saveStatus === 'string' && saveStatus === 'Saved!' ? 'success' : ''}`}>
+                {saveStatus}
+              </span>
+            )}
           </div>
         </div>
       </header>
+      
+      {/* Main Content */}
 
-      <div className="d-flex flex-col lg:flex-row h-[calc(100vh-4rem)]">
+      <div className="create-resume-main">
         {/* Sidebar - Hidden on mobile by default, shown with overlay */}
-        <div className={`fixed lg:static inset-y-0 left-0 z-50 w-64 card-enhanced transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out h-full lg:h-auto`}>
-          <div className="p-4 h-full d-flex flex-col">
-            <nav className="flex-1">
-              <ul className="d-grid gap-2">
-                {sections.map((section) => {
-                  const IconComponent = section.icon;
-                  return (
-                    <li key={section.id}>
-                      <button
-                        onClick={() => {
-                          setActiveSection(section.id);
-                          setSidebarOpen(false); // Close sidebar on mobile after selection
-                        }}
-                        className={`w-full d-flex items-center space-x-2 px-3 py-2 rounded-xl text-left transition-all duration-300 ${
-                          activeSection === section.id
-                            ? 'bg-gradient-linear text-white shadow-lg hover:scale-105'
-                            : 'hover:bg-white/10 text-white hover:scale-[1.02]'
-                        }`}
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        <span>{section.label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-            {/* Close button for mobile */}
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden mt-4 p-2 rounded-xl bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20 transition-all duration-300"
-            >
-              Close
-            </button>
+        <div className={`create-resume-sidebar ${theme === 'dark' ? 'dark-mode' : ''} ${sidebarOpen ? 'open' : ''}`}>
+          <div className="create-resume-sidebar-header">
+            <div className="create-resume-sidebar-title-container">
+              <h2 className="create-resume-sidebar-title">Resume Sections</h2>
+              <div className="create-resume-total-completion">
+                <span className="create-resume-completion-text">Overall Progress:</span>
+                <span className="create-resume-completion-value">{overallCompletion()}%</span>
+              </div>
+            </div>
+            <p className="create-resume-sidebar-subtitle">Click to edit different sections</p>
           </div>
+          <nav className="create-resume-nav-list">
+            {sections.map((section) => {
+              const IconComponent = section.icon;
+              const completion = calculateCompletion(section.id);
+              const isComplete = completion === 100;
+              const isInProgress = completion > 0 && completion < 100;
+
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setActiveSection(section.id);
+                    setSidebarOpen(false); // Close sidebar on mobile after selection
+                  }}
+                  className={`create-resume-nav-item ${theme === 'dark' ? 'dark-mode' : ''} ${activeSection === section.id ? 'active' : ''}`}
+                  aria-current={activeSection === section.id ? 'page' : undefined}
+                >
+                  <div className="create-resume-nav-icon">
+                    <IconComponent className="w-5 h-5" />
+                  </div>
+                  <div className="create-resume-nav-content">
+                    <div className="create-resume-nav-label">{section.label}</div>
+                    <div className="create-resume-nav-progress">
+                      <div className="create-resume-nav-progress-container">
+                        <div
+                          className="create-resume-nav-progress-bar"
+                          style={{ width: `${completion}%` }}
+                        ></div>
+                      </div>
+                      <span className={`create-resume-nav-progress-text ${
+                        isComplete ? 'complete' :
+                        isInProgress ? 'in-progress' :
+                        'not-started'
+                      }`}>
+                        {completion}%
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
         {/* Overlay for mobile sidebar */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            className="create-resume-overlay open"
             onClick={() => setSidebarOpen(false)}
           ></div>
         )}
 
         {/* Mobile header for toggling sidebar */}
-        <div className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
+        <div className="create-resume-mobile-header lg:hidden">
+          <h2 className="create-resume-mobile-title">
             {sections.find(s => s.id === activeSection)?.label || 'Resume Editor'}
           </h2>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg bg-accent text-accent-foreground"
+            className="create-resume-mobile-menu-btn"
+            aria-label="Toggle navigation menu"
           >
-            Menu
+            <span>Menu</span>
           </button>
         </div>
 
         {/* Main Editor */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="create-resume-editor">
+          <div className="create-resume-editor-grid">
             {/* Form Section */}
-            <div className="d-grid gap-6">
+            <div className="create-resume-form-section">
               {activeSection === 'personal' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className={`create-resume-card personal ${theme === 'dark' ? 'dark-mode' : ''} create-resume-animate`}
                 >
-                  <h2 className="text-xl font-semibold mb-4 d-flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    Personal Information
-                  </h2>
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <User className="w-5 h-5" />
+                      Personal Information
+                    </h2>
+                  </div>
 
-                  <div className="grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">Full Name</label>
+                  <div className="create-resume-form-grid personal-info-grid">
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Full Name</label>
                       <input
                         type="text"
-                        value={resumeData.personalInfo.fullName}
+                        value={resumeData.personalInfo?.fullName || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'fullName', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className={`create-resume-form-input ${getValidationError('personalInfo', 'fullName') ? 'error' : ''}`}
                         placeholder="John Doe"
                       />
+                      {getValidationError('personalInfo', 'fullName') && (
+                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'fullName')}</p>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">Email</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Email</label>
                       <input
                         type="email"
-                        value={resumeData.personalInfo.email}
+                        value={resumeData.personalInfo?.email || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className={`create-resume-form-input ${getValidationError('personalInfo', 'email') ? 'error' : ''}`}
                         placeholder="john@example.com"
                       />
+                      {getValidationError('personalInfo', 'email') && (
+                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'email')}</p>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">Phone</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Phone</label>
                       <input
                         type="tel"
-                        value={resumeData.personalInfo.phone}
+                        value={resumeData.personalInfo?.phone || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className={`create-resume-form-input ${getValidationError('personalInfo', 'phone') ? 'error' : ''}`}
                         placeholder="+1 (555) 123-4567"
                       />
+                      {getValidationError('personalInfo', 'phone') && (
+                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'phone')}</p>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">Address</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Address</label>
                       <input
                         type="text"
-                        value={resumeData.personalInfo.address}
+                        value={resumeData.personalInfo?.address || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'address', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className="create-resume-form-input"
                         placeholder="123 Main St, City"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">LinkedIn</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">LinkedIn</label>
                       <input
                         type="url"
-                        value={resumeData.personalInfo.linkedin}
+                        value={resumeData.personalInfo?.linkedin || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'linkedin', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className={`create-resume-form-input ${getValidationError('personalInfo', 'linkedin') ? 'error' : ''}`}
                         placeholder="https://linkedin.com/in/username"
                       />
+                      {getValidationError('personalInfo', 'linkedin') && (
+                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'linkedin')}</p>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">GitHub</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">GitHub</label>
                       <input
                         type="url"
-                        value={resumeData.personalInfo.github}
+                        value={resumeData.personalInfo?.github || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'github', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className={`create-resume-form-input ${getValidationError('personalInfo', 'github') ? 'error' : ''}`}
                         placeholder="https://github.com/username"
                       />
+                      {getValidationError('personalInfo', 'github') && (
+                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'github')}</p>
+                      )}
                     </div>
 
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium mb-2 text-white/80">Website</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Website</label>
                       <input
                         type="url"
-                        value={resumeData.personalInfo.website}
+                        value={resumeData.personalInfo?.website || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'website', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                        className={`create-resume-form-input ${getValidationError('personalInfo', 'website') ? 'error' : ''}`}
                         placeholder="https://yourwebsite.com"
                       />
+                      {getValidationError('personalInfo', 'website') && (
+                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'website')}</p>
+                      )}
                     </div>
 
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium mb-2 text-white/80">Professional Summary</label>
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Professional Summary</label>
                       <textarea
-                        value={resumeData.personalInfo.summary}
+                        value={resumeData.personalInfo?.summary || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'summary', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300 h-24 resize-none"
+                        className="create-resume-form-textarea"
                         placeholder="A brief summary of your professional background and career goals..."
+                        rows="4"
                       />
                     </div>
                   </div>
@@ -551,21 +797,24 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className={`create-resume-card summary ${theme === 'dark' ? 'dark-mode' : ''} create-resume-animate`}
                 >
-                  <h2 className="text-xl font-semibold mb-4 d-flex items-center text-white">
-                    <FileText className="w-5 h-5 mr-2" />
-                    Professional Summary
-                  </h2>
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <FileText className="w-5 h-5" />
+                      Professional Summary
+                    </h2>
+                  </div>
 
-                  <div className="d-grid gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white/80">Summary</label>
+                  <div className="create-resume-form-grid personal-info-grid">
+                    <div className="create-resume-form-field">
+                      <label className="create-resume-form-label">Summary</label>
                       <textarea
-                        value={resumeData.personalInfo.summary}
+                        value={resumeData.personalInfo?.summary || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'summary', e.target.value)}
-                        className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300 h-32 resize-none"
+                        className="create-resume-form-textarea"
                         placeholder="A compelling summary that highlights your key qualifications, experience, and career objectives..."
+                        rows="6"
                       />
                     </div>
                   </div>
@@ -576,94 +825,94 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className="create-resume-card education create-resume-animate"
                 >
-                  <div className="d-flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold d-flex items-center text-white">
-                      <GraduationCap className="w-5 h-5 mr-2" />
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <GraduationCap className="w-5 h-5" />
                       Education
                     </h2>
                     <button
                       onClick={() => addNewItem('education')}
-                      className="btn-enhanced d-flex items-center space-x-1 px-3 py-1"
+                      className="create-resume-add-btn"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add</span>
                     </button>
                   </div>
 
-                  <div className="d-grid gap-4">
-                    {resumeData.education.map((edu, index) => (
-                      <div key={index} className="card-enhanced p-4 relative">
+                  <div className="grid gap-4">
+                    {(resumeData.education || []).map((edu, index) => (
+                      <div key={index} className="create-resume-item">
                         <button
                           onClick={() => removeItem('education', index)}
-                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                          className="create-resume-remove-btn"
                         >
                           <X className="w-4 h-4" />
                         </button>
 
-                        <div className="grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Institution</label>
+                        <div className="create-resume-form-grid">
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Institution</label>
                             <input
                               type="text"
-                              value={edu.institution}
+                              value={edu?.institution || ''}
                               onChange={(e) => handleInputChange('education', 'institution', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="University Name"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Degree</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Degree</label>
                             <input
                               type="text"
-                              value={edu.degree}
+                              value={edu?.degree || ''}
                               onChange={(e) => handleInputChange('education', 'degree', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Bachelor's, Master's, etc."
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Field of Study</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Field of Study</label>
                             <input
                               type="text"
-                              value={edu.fieldOfStudy}
+                              value={edu?.fieldOfStudy || ''}
                               onChange={(e) => handleInputChange('education', 'fieldOfStudy', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Computer Science, Business, etc."
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Grade/GPA</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Grade/GPA</label>
                             <input
                               type="text"
-                              value={edu.grade}
+                              value={edu?.grade || ''}
                               onChange={(e) => handleInputChange('education', 'grade', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="3.8/4.0, A-, etc."
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Start Date</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Start Date</label>
                             <input
                               type="month"
-                              value={edu.startDate}
+                              value={edu?.startDate || ''}
                               onChange={(e) => handleInputChange('education', 'startDate', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">End Date</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">End Date</label>
                             <input
                               type="month"
-                              value={edu.endDate}
+                              value={edu?.endDate || ''}
                               onChange={(e) => handleInputChange('education', 'endDate', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                             />
                           </div>
                         </div>
@@ -677,16 +926,16 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className="create-resume-card experience create-resume-animate"
                 >
-                  <div className="d-flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold d-flex items-center text-white">
-                      <Briefcase className="w-5 h-5 mr-2" />
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <Briefcase className="w-5 h-5" />
                       Work Experience
                     </h2>
                     <button
                       onClick={() => addNewItem('experience')}
-                      className="btn-enhanced d-flex items-center space-x-1 px-3 py-1"
+                      className="create-resume-add-btn"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add</span>
@@ -694,78 +943,79 @@ function CreateResume() {
                   </div>
 
                   <div className="d-grid gap-4">
-                    {resumeData.experience.map((exp, index) => (
-                      <div key={index} className="card-enhanced p-4 relative">
+                    {(resumeData.experience || []).map((exp, index) => (
+                      <div key={index} className="create-resume-item">
                         <button
                           onClick={() => removeItem('experience', index)}
-                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                          className="create-resume-remove-btn"
                         >
                           <X className="w-4 h-4" />
                         </button>
 
-                        <div className="grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Company</label>
+                        <div className="create-resume-form-grid">
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Company</label>
                             <input
                               type="text"
-                              value={exp.company}
+                              value={exp?.company || ''}
                               onChange={(e) => handleInputChange('experience', 'company', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Company Name"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Position</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Position</label>
                             <input
                               type="text"
-                              value={exp.position}
+                              value={exp?.position || ''}
                               onChange={(e) => handleInputChange('experience', 'position', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Job Title"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Location</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Location</label>
                             <input
                               type="text"
-                              value={exp.location}
+                              value={exp?.location || ''}
                               onChange={(e) => handleInputChange('experience', 'location', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="City, State"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Start Date</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Start Date</label>
                             <input
                               type="month"
-                              value={exp.startDate}
+                              value={exp?.startDate || ''}
                               onChange={(e) => handleInputChange('experience', 'startDate', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">End Date</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">End Date</label>
                             <input
                               type="month"
-                              value={exp.endDate}
+                              value={exp?.endDate || ''}
                               onChange={(e) => handleInputChange('experience', 'endDate', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Leave blank if current"
                             />
                           </div>
                         </div>
 
                         <div className="mt-4">
-                          <label className="block text-sm font-medium mb-2 text-white/80">Description</label>
+                          <label className="create-resume-form-label">Description</label>
                           <textarea
-                            value={exp.description}
+                            value={exp?.description || ''}
                             onChange={(e) => handleInputChange('experience', 'description', e.target.value, index)}
-                            className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300 h-20 resize-none"
+                            className="create-resume-form-textarea"
                             placeholder="Describe your responsibilities and achievements..."
+                            rows="3"
                           />
                         </div>
                       </div>
@@ -778,16 +1028,16 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className="create-resume-card skills create-resume-animate"
                 >
-                  <div className="d-flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold d-flex items-center text-white">
-                      <Code className="w-5 h-5 mr-2" />
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <Code className="w-5 h-5" />
                       Skills
                     </h2>
                     <button
                       onClick={() => addNewItem('skills')}
-                      className="btn-enhanced d-flex items-center space-x-1 px-3 py-1"
+                      className="create-resume-add-btn"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add</span>
@@ -795,38 +1045,38 @@ function CreateResume() {
                   </div>
 
                   <div className="d-grid gap-4">
-                    {resumeData.skills.map((skill, index) => (
-                      <div key={index} className="card-enhanced p-4 relative">
+                    {(resumeData.skills || []).map((skill, index) => (
+                      <div key={index} className="create-resume-item">
                         <button
                           onClick={() => removeItem('skills', index)}
-                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                          className="create-resume-remove-btn"
                         >
                           <X className="w-4 h-4" />
                         </button>
 
-                        <div className="grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Skill Name</label>
+                        <div className="create-resume-form-grid">
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Skill Name</label>
                             <input
                               type="text"
-                              value={skill.name}
+                              value={skill?.name || ''}
                               onChange={(e) => handleInputChange('skills', 'name', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="JavaScript, Python, Leadership..."
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Proficiency Level</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Proficiency Level</label>
                             <select
-                              value={skill.level}
+                              value={skill?.level || 'Intermediate'}
                               onChange={(e) => handleInputChange('skills', 'level', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white transition-all duration-300"
+                              className="create-resume-form-select"
                             >
-                              <option value="Beginner" className="bg-gray-800 text-white">Beginner</option>
-                              <option value="Intermediate" className="bg-gray-800 text-white">Intermediate</option>
-                              <option value="Advanced" className="bg-gray-800 text-white">Advanced</option>
-                              <option value="Expert" className="bg-gray-800 text-white">Expert</option>
+                              <option value="Beginner">Beginner</option>
+                              <option value="Intermediate">Intermediate</option>
+                              <option value="Advanced">Advanced</option>
+                              <option value="Expert">Expert</option>
                             </select>
                           </div>
                         </div>
@@ -840,16 +1090,16 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className="create-resume-card projects create-resume-animate"
                 >
-                  <div className="d-flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold d-flex items-center text-white">
-                      <Award className="w-5 h-5 mr-2" />
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <Award className="w-5 h-5" />
                       Projects
                     </h2>
                     <button
                       onClick={() => addNewItem('projects')}
-                      className="btn-enhanced d-flex items-center space-x-1 px-3 py-1"
+                      className="create-resume-add-btn"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add</span>
@@ -857,57 +1107,58 @@ function CreateResume() {
                   </div>
 
                   <div className="d-grid gap-4">
-                    {resumeData.projects.map((project, index) => (
-                      <div key={index} className="card-enhanced p-4 relative">
+                    {(resumeData.projects || []).map((project, index) => (
+                      <div key={index} className="create-resume-item">
                         <button
                           onClick={() => removeItem('projects', index)}
-                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                          className="create-resume-remove-btn"
                         >
                           <X className="w-4 h-4" />
                         </button>
 
-                        <div className="grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Project Name</label>
+                        <div className="create-resume-form-grid">
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Project Name</label>
                             <input
                               type="text"
-                              value={project.name}
+                              value={project?.name || ''}
                               onChange={(e) => handleInputChange('projects', 'name', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Project Name"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Technologies Used</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Technologies Used</label>
                             <input
                               type="text"
-                              value={project.technologies}
+                              value={project?.technologies || ''}
                               onChange={(e) => handleInputChange('projects', 'technologies', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="React, Node.js, MongoDB..."
                             />
                           </div>
 
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium mb-2 text-white/80">Project Link</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Project Link</label>
                             <input
                               type="url"
-                              value={project.link}
+                              value={project?.link || ''}
                               onChange={(e) => handleInputChange('projects', 'link', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="https://project-url.com"
                             />
                           </div>
                         </div>
 
                         <div className="mt-4">
-                          <label className="block text-sm font-medium mb-2 text-white/80">Description</label>
+                          <label className="create-resume-form-label">Description</label>
                           <textarea
-                            value={project.description}
+                            value={project?.description || ''}
                             onChange={(e) => handleInputChange('projects', 'description', e.target.value, index)}
-                            className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300 h-20 resize-none"
+                            className="create-resume-form-textarea"
                             placeholder="Describe the project, your role, and key accomplishments..."
+                            rows="3"
                           />
                         </div>
                       </div>
@@ -920,16 +1171,16 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card-enhanced p-6"
+                  className="create-resume-card certifications create-resume-animate"
                 >
-                  <div className="d-flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold d-flex items-center text-white">
-                      <Award className="w-5 h-5 mr-2" />
+                  <div className="create-resume-card-header">
+                    <h2 className="create-resume-card-title">
+                      <Award className="w-5 h-5" />
                       Certifications
                     </h2>
                     <button
                       onClick={() => addNewItem('certifications')}
-                      className="btn-enhanced d-flex items-center space-x-1 px-3 py-1"
+                      className="create-resume-add-btn"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add</span>
@@ -937,55 +1188,55 @@ function CreateResume() {
                   </div>
 
                   <div className="d-grid gap-4">
-                    {resumeData.certifications.map((cert, index) => (
-                      <div key={index} className="card-enhanced p-4 relative">
+                    {(resumeData.certifications || []).map((cert, index) => (
+                      <div key={index} className="create-resume-item">
                         <button
                           onClick={() => removeItem('certifications', index)}
-                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                          className="create-resume-remove-btn"
                         >
                           <X className="w-4 h-4" />
                         </button>
 
-                        <div className="grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Certification Name</label>
+                        <div className="create-resume-form-grid">
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Certification Name</label>
                             <input
                               type="text"
-                              value={cert.name}
+                              value={cert?.name || ''}
                               onChange={(e) => handleInputChange('certifications', 'name', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="AWS Certified Developer"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Issuer</label>
+                          <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Issuer</label>
                             <input
                               type="text"
-                              value={cert.issuer}
+                              value={cert?.issuer || ''}
                               onChange={(e) => handleInputChange('certifications', 'issuer', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="Amazon Web Services"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Date</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Date</label>
                             <input
                               type="month"
-                              value={cert.date}
+                              value={cert?.date || ''}
                               onChange={(e) => handleInputChange('certifications', 'date', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-white/80">Credential ID</label>
+                          <div className="create-resume-form-field">
+                            <label className="create-resume-form-label">Credential ID</label>
                             <input
                               type="text"
-                              value={cert.credentialId}
+                              value={cert?.credentialId || ''}
                               onChange={(e) => handleInputChange('certifications', 'credentialId', e.target.value, index)}
-                              className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-white/30 focus:border-white/40 text-white placeholder-white/60 transition-all duration-300"
+                              className="create-resume-form-input"
                               placeholder="ID-123456"
                             />
                           </div>
@@ -998,13 +1249,48 @@ function CreateResume() {
             </div>
 
             {/* Live Preview */}
-            <div className="lg:sticky lg:top-6 lg:self-start">
-              <div className="card-enhanced overflow-hidden">
-                <div className="bg-white/10 backdrop-blur-sm px-4 py-3 border-b border-white/20">
-                  <h3 className="font-medium text-white">Live Preview</h3>
+            <div className="lg:sticky lg:top-6 lg:self-start mt-6 lg:mt-0">
+              <div className="create-resume-preview">
+                <div className="create-resume-preview-header">
+                  <div className="flex items-center">
+                    <Eye className="w-5 h-5 mr-2" />
+                    <h3 className="create-resume-preview-title">Live Preview</h3>
+                  </div>
+                  <div className="create-resume-preview-actions">
+                    <button
+                      onClick={() => setPreviewScale('75')}
+                      className={`zoom-btn ${previewScale === '75' ? 'active' : ''}`}
+                      title="75% Zoom"
+                    >
+                      75%
+                    </button>
+                    <button
+                      onClick={() => setPreviewScale('90')}
+                      className={`zoom-btn ${previewScale === '90' ? 'active' : ''}`}
+                      title="90% Zoom"
+                    >
+                      90%
+                    </button>
+                    <button
+                      onClick={() => setPreviewScale('100')}
+                      className={`zoom-btn ${previewScale === '100' ? 'active' : ''}`}
+                      title="100% Zoom"
+                    >
+                      100%
+                    </button>
+                    <button
+                      onClick={() => setPreviewScale('110')}
+                      className={`zoom-btn ${previewScale === '110' ? 'active' : ''}`}
+                      title="110% Zoom"
+                    >
+                      110%
+                    </button>
+                  </div>
                 </div>
-                <div className="p-4 bg-white/5 overflow-auto max-h-[calc(100vh-200px)]">
-                  <LivePreview />
+                <div className="create-resume-preview-content">
+                  <div className={`create-resume-preview-scale zoom-${previewScale}`}>
+                    <LivePreview />
+                  </div>
                 </div>
               </div>
             </div>

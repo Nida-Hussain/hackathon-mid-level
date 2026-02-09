@@ -6,6 +6,7 @@ import { Plus, FileText, Edit3, Trash2, Download, Eye, Search, Sun, Moon, Palett
 import { motion } from 'framer-motion';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
+import Navbar from '../components/Navbar';
 
 function Dashboard() {
   const { currentUser, logout } = useAuth();
@@ -99,40 +100,42 @@ function Dashboard() {
   );
 
   return (
-    <div className="dashboard-bg-gradient">
+    <div className={`dashboard-bg-gradient ${theme}`}>
       {/* Header */}
-      <header className="navbar-glass">
+      <header className={`navbar-glass ${theme}`}>
         <div className="dashboard-max-width-container">
           <div className="d-flex justify-between items-center h-16">
             <div className="d-flex items-center space-x-4">
-              <div className="d-flex items-center space-x-2">
-                <div className="w-10 h-10 bg-gradient-linear rounded-xl d-flex items-center justify-center shadow-lg">
+              <div className="navbar-brand">
+                <div className="navbar-brand-icon">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-white">ResumeBuilder</h1>
+                <h1 className="navbar-brand-text">ResumeBuilder</h1>
               </div>
             </div>
 
-            <div className="d-flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search resumes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-enhanced pl-11 pr-4 py-2 w-64 text-white placeholder-white/60"
-                />
+            <div className="navbar-actions">
+              <div className="navbar-search">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search resumes..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`input-enhanced pl-11 pr-4 py-2 w-64 text-white placeholder-white/60 ${theme}`}
+                  />
+                </div>
               </div>
 
               <select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                className="input-enhanced px-4 py-2 text-white"
+                className={`input-enhanced px-4 py-2 text-white ${theme}`}
               >
-                <option value="classic" className="dashboard-option text-white">Classic</option>
-                <option value="modern" className="dashboard-option text-white">Modern</option>
-                <option value="professional" className="dashboard-option text-white">Professional</option>
+                <option value="classic" className={`dashboard-option text-white ${theme}`}>Classic</option>
+                <option value="modern" className={`dashboard-option text-white ${theme}`}>Modern</option>
+                <option value="professional" className={`dashboard-option text-white ${theme}`}>Professional</option>
               </select>
 
               <button className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
@@ -146,24 +149,22 @@ function Dashboard() {
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
-              <div className="relative">
-                <button className="d-flex items-center space-x-2 group">
-                  <div className="w-9 h-9 bg-gradient-linear rounded-full d-flex items-center justify-center shadow-lg">
-                    <span className="text-white text-sm font-medium">
-                      {currentUser?.email?.charAt(0)?.toUpperCase()}
-                    </span>
-                  </div>
-                  <LogOut
-                    className="w-5 h-5 text-white/80 hover:text-red-400 cursor-pointer transition-all duration-300"
-                    onClick={handleLogout}
-                  />
-                </button>
+              <div className="navbar-user-menu">
+                <div className="user-avatar">
+                  <span className="text-white text-sm font-medium">
+                    {currentUser?.email?.charAt(0)?.toUpperCase()}
+                  </span>
+                </div>
+                <LogOut
+                  className="w-5 h-5 logout-btn cursor-pointer transition-all duration-300"
+                  onClick={handleLogout}
+                />
               </div>
             </div>
           </div>
         </div>
       </header>
-
+      
       {/* Main Content */}
       <main className="dashboard-main-container">
         <div className="d-flex justify-between items-center mb-8">
@@ -181,6 +182,15 @@ function Dashboard() {
             <Plus className="w-5 h-5" />
             <span>Create New Resume</span>
           </motion.button>
+        </div>
+
+        {/* Welcome Section */}
+        <div className={`welcome-section ${theme}`}>
+          <div className="d-flex justify-between items-center mb-2">
+            <h2>Welcome back, {currentUser?.email?.split('@')[0]}!</h2>
+            <p>Here's what's happening with your resumes today.</p>
+          </div>
+          <p>Manage and track your professional resumes</p>
         </div>
 
         {loading ? (
@@ -208,37 +218,109 @@ function Dashboard() {
           <>
             {/* Stats Cards */}
             <div className="dashboard-stats-container">
-              <div className="dashboard-stat-card">
+              <div className={`dashboard-stat-card ${theme}`}>
                 <div className="dashboard-stat-value">{filteredResumes.length}</div>
                 <div className="dashboard-stat-label">Total Resumes</div>
               </div>
-              <div className="dashboard-stat-card">
+              <div className={`dashboard-stat-card ${theme}`}>
                 <div className="dashboard-stat-value">{filteredResumes.reduce((acc, resume) => acc + (resume.experience?.length || 0), 0)}</div>
                 <div className="dashboard-stat-label">Total Experiences</div>
               </div>
-              <div className="dashboard-stat-card">
+              <div className={`dashboard-stat-card ${theme}`}>
                 <div className="dashboard-stat-value">{filteredResumes.reduce((acc, resume) => acc + (resume.skills?.length || 0), 0)}</div>
                 <div className="dashboard-stat-label">Total Skills</div>
               </div>
             </div>
 
+            {/* Analytics Section */}
+            <div className={`analytics-section ${theme}`}>
+              <div className="analytics-header">
+                <h3>Resume Analytics</h3>
+              </div>
+              <div className="analytics-grid">
+                {/* Template Distribution */}
+                <div className={`analytics-card ${theme}`}>
+                  <h4>Template Distribution</h4>
+                  {['classic', 'modern', 'professional'].map(template => {
+                    const count = filteredResumes.filter(r => r.templateId === template).length;
+                    const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
+
+                    return (
+                      <div key={template} className="mb-4">
+                        <div className="progress-label">
+                          <span className="capitalize">{template}</span>
+                          <span>{percentage}%</span>
+                        </div>
+                        <div className="progress-bar-container">
+                          <div 
+                            className={`progress-bar ${template === 'classic' ? 'progress-bar-template' : template === 'modern' ? 'progress-bar-experience' : 'progress-bar-skills'}`} 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Experience Level Distribution */}
+                <div className={`analytics-card ${theme}`}>
+                  <h4>Experience Levels</h4>
+                  {['Entry Level', 'Mid Level', 'Senior Level', 'Executive'].map(level => {
+                    let count = 0;
+                    switch(level) {
+                      case 'Entry Level':
+                        count = filteredResumes.filter(r => (r.experience?.length || 0) <= 2).length;
+                        break;
+                      case 'Mid Level':
+                        count = filteredResumes.filter(r => (r.experience?.length || 0) > 2 && (r.experience?.length || 0) <= 5).length;
+                        break;
+                      case 'Senior Level':
+                        count = filteredResumes.filter(r => (r.experience?.length || 0) > 5 && (r.experience?.length || 0) <= 8).length;
+                        break;
+                      case 'Executive':
+                        count = filteredResumes.filter(r => (r.experience?.length || 0) > 8).length;
+                        break;
+                      default:
+                        count = 0;
+                    }
+                    const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
+
+                    return (
+                      <div key={level} className="mb-4">
+                        <div className="progress-label">
+                          <span>{level}</span>
+                          <span>{percentage}%</span>
+                        </div>
+                        <div className="progress-bar-container">
+                          <div 
+                            className={`progress-bar ${level === 'Entry Level' ? 'progress-bar-education' : level === 'Mid Level' ? 'progress-bar-template' : level === 'Senior Level' ? 'progress-bar-experience' : 'progress-bar-skills'}`} 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* Quick Actions */}
             <div className="quick-actions-grid">
-              <div className="quick-action-card" onClick={createNewResume}>
+              <div className={`quick-action-card ${theme}`} onClick={createNewResume}>
                 <div className="quick-action-icon">
                   <Plus className="w-6 h-6 text-white" />
                 </div>
                 <div className="quick-action-title">New Resume</div>
                 <div className="quick-action-desc">Create a professional resume</div>
               </div>
-              <div className="quick-action-card" onClick={() => navigate('/create-resume')}>
+              <div className={`quick-action-card ${theme}`} onClick={() => navigate('/create-resume')}>
                 <div className="quick-action-icon">
                   <Edit3 className="w-6 h-6 text-white" />
                 </div>
                 <div className="quick-action-title">Edit Existing</div>
                 <div className="quick-action-desc">Modify your current resume</div>
               </div>
-              <div className="quick-action-card" onClick={() => navigate('/dashboard')}>
+              <div className={`quick-action-card ${theme}`} onClick={() => navigate('/dashboard')}>
                 <div className="quick-action-icon">
                   <Eye className="w-6 h-6 text-white" />
                 </div>
@@ -247,15 +329,110 @@ function Dashboard() {
               </div>
             </div>
 
+            {/* Recent Activity Timeline */}
+            <div className={`dashboard-activity-timeline ${theme}`}>
+              <h3 className="text-xl font-semibold text-foreground mb-4">Recent Activity</h3>
+              <div className="space-y-4">
+                {filteredResumes.slice(0, 3).map((resume, index) => (
+                  <div key={index} className={`activity-item ${theme}`}>
+                    <div className="activity-icon">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="activity-content">
+                      <div className="activity-title">Updated "{resume.title}"</div>
+                      <div className="activity-time">
+                        {resume.updatedAt?.toDate ? resume.updatedAt.toDate().toLocaleString() : 'Just now'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Analytics Section */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-foreground mb-4">Resume Analytics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Template Distribution */}
+                <div className="card-enhanced p-6">
+                  <h4 className="font-semibold text-foreground mb-4">Template Distribution</h4>
+                  <div className="space-y-3">
+                    {['classic', 'modern', 'professional'].map(template => {
+                      const count = filteredResumes.filter(r => r.templateId === template).length;
+                      const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
+                      
+                      return (
+                        <div key={template} className="mb-3">
+                          <div className="d-flex justify-between text-sm mb-1">
+                            <span className="capitalize text-muted-foreground">{template}</span>
+                            <span className="text-foreground">{percentage}% ({count})</span>
+                          </div>
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-linear h-2 rounded-full" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* Experience Level Distribution */}
+                <div className="card-enhanced p-6">
+                  <h4 className="font-semibold text-foreground mb-4">Experience Levels</h4>
+                  <div className="space-y-3">
+                    {['Entry Level', 'Mid Level', 'Senior Level', 'Executive'].map(level => {
+                      // Calculate experience level distribution based on number of experiences
+                      let count = 0;
+                      switch(level) {
+                        case 'Entry Level':
+                          count = filteredResumes.filter(r => (r.experience?.length || 0) <= 2).length;
+                          break;
+                        case 'Mid Level':
+                          count = filteredResumes.filter(r => (r.experience?.length || 0) > 2 && (r.experience?.length || 0) <= 5).length;
+                          break;
+                        case 'Senior Level':
+                          count = filteredResumes.filter(r => (r.experience?.length || 0) > 5 && (r.experience?.length || 0) <= 8).length;
+                          break;
+                        case 'Executive':
+                          count = filteredResumes.filter(r => (r.experience?.length || 0) > 8).length;
+                          break;
+                        default:
+                          count = 0;
+                      }
+                      const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
+                      
+                      return (
+                        <div key={level} className="mb-3">
+                          <div className="d-flex justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">{level}</span>
+                            <span className="text-foreground">{percentage}% ({count})</span>
+                          </div>
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-linear h-2 rounded-full" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Resume Grid */}
-            <div className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="resume-grid">
               {filteredResumes.map((resume, index) => (
                 <motion.div
                   key={resume.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="card-enhanced p-6 hover:scale-105 transition-all duration-300 d-flex flex-col h-full"
+                  className={`card-enhanced p-6 hover:scale-105 transition-all duration-300 d-flex flex-col h-full ${theme}`}
                 >
                   <div className="d-flex items-start justify-between mb-4">
                     <div className="d-flex items-center space-x-3">
@@ -263,28 +440,28 @@ function Dashboard() {
                         <FileText className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground truncate max-w-[160px]">{resume.title}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className={`font-semibold text-foreground truncate max-w-[160px] ${theme}`}>{resume.title}</h3>
+                        <p className={`text-sm text-muted-foreground ${theme}`}>
                           {resume.updatedAt?.toDate ? resume.updatedAt.toDate().toLocaleDateString() : 'Just now'}
                         </p>
                       </div>
                     </div>
 
-                    <span className={`px-3 py-1 text-xs rounded-full badge ${resume.templateId === 'modern' ? 'badge-primary' : resume.templateId === 'professional' ? 'badge-success' : 'badge-secondary'}`}>
+                    <span className={`px-3 py-1 text-xs rounded-full badge ${resume.templateId === 'modern' ? 'badge-modern' : resume.templateId === 'professional' ? 'badge-professional' : 'badge-secondary'}`}>
                       {resume.templateId}
                     </span>
                   </div>
 
                   <div className="d-grid gap-3 mb-6 flex-1">
-                    <div className="d-flex items-center text-sm text-muted-foreground">
+                    <div className={`d-flex items-center text-sm text-muted-foreground ${theme}`}>
                       <Briefcase className="w-4 h-4 mr-3 text-indigo-500" />
                       <span>{resume.experience?.length || 0} experiences</span>
                     </div>
-                    <div className="d-flex items-center text-sm text-muted-foreground">
+                    <div className={`d-flex items-center text-sm text-muted-foreground ${theme}`}>
                       <GraduationCap className="w-4 h-4 mr-3 text-indigo-500" />
                       <span>{resume.education?.length || 0} educations</span>
                     </div>
-                    <div className="d-flex items-center text-sm text-muted-foreground">
+                    <div className={`d-flex items-center text-sm text-muted-foreground ${theme}`}>
                       <Code className="w-4 h-4 mr-3 text-indigo-500" />
                       <span>{resume.skills?.length || 0} skills</span>
                     </div>
@@ -293,21 +470,21 @@ function Dashboard() {
                   <div className="d-flex space-x-2">
                     <button
                       onClick={() => navigate(`/create-resume/${resume.id}`)}
-                      className="flex-1 btn-enhanced d-flex items-center justify-center space-x-1 py-3"
+                      className={`flex-1 btn-enhanced d-flex items-center justify-center space-x-1 py-3 ${theme}`}
                     >
                       <Edit3 className="w-4 h-4" />
                       <span>Edit</span>
                     </button>
                     <button
                       onClick={() => navigate(`/resume/${resume.id}`)}
-                      className="flex-1 btn-enhanced d-flex items-center justify-center space-x-1 py-3"
+                      className={`flex-1 btn-enhanced d-flex items-center justify-center space-x-1 py-3 ${theme}`}
                     >
                       <Eye className="w-4 h-4" />
                       <span>View</span>
                     </button>
                     <button
                       onClick={() => deleteResume(resume.id)}
-                      className="flex-1 btn-enhanced bg-destructive/20 border-destructive/30 text-destructive hover:bg-destructive/30 d-flex items-center justify-center space-x-1 py-3"
+                      className={`flex-1 btn-enhanced bg-destructive/20 border-destructive/30 text-destructive hover:bg-destructive/30 d-flex items-center justify-center space-x-1 py-3 ${theme}`}
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Delete</span>

@@ -25,6 +25,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Navbar from '../components/Navbar';
 
 function ResumePreview() {
   const { id } = useParams();
@@ -465,25 +466,25 @@ function ResumePreview() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="navbar-blur sticky top-0 z-50 border-b border-border">
+      <header className="navbar-blur sticky top-0 z-50 border-b border-border bg-white/80 dark:bg-gray-800/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="d-flex justify-between items-center h-16">
             <div className="d-flex items-center space-x-4">
               <button
                 onClick={() => navigate(-1)}
-                className="d-flex items-center space-x-2 hover:text-primary transition-colors"
+                className="d-flex items-center space-x-2 hover:text-primary transition-colors text-gray-700 dark:text-gray-300"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back</span>
               </button>
-              <span className="text-lg font-semibold">{resumeData?.title || 'Resume'}</span>
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">{resumeData?.title || 'Resume'}</span>
             </div>
 
             <div className="d-flex items-center space-x-4">
               <select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white"
               >
                 <option value="modern">Modern</option>
                 <option value="classic">Classic</option>
@@ -516,7 +517,7 @@ function ResumePreview() {
           </div>
         </div>
       </header>
-
+      
       {/* Resume Preview */}
       <div className="d-flex items-center justify-center p-8">
         <div id="resume-container">

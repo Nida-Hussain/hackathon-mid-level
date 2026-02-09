@@ -44,7 +44,7 @@ h6 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
 
 /* Color variables for consistent theming */
 :root {
-  --color-primary: 99 102 241; /* indigo-500 */
+  --color-primary: 106 97 241; /* indigo-500 enhanced */
   --color-primary-dark: 79 70 229; /* indigo-600 */
   --color-primary-light: 129 140 248; /* indigo-400 */
   --color-secondary: 163 163 163; /* neutral-400 */
@@ -53,7 +53,12 @@ h6 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
   --color-warning: 245 158 11; /* amber-500 */
   --color-error: 239 68 68; /* red-500 */
   --color-info: 59 130 246; /* blue-500 */
-  --color-accent: 139 92 246; /* violet-500 */
+  --color-accent: 167 139 250; /* violet-400 enhanced */
+  --color-accent-2: 236 72 153; /* pink-500 */
+  --color-accent-3: 56 189 248; /* sky-400 */
+  --color-gradient-start: 102 126 234; /* #667eea */
+  --color-gradient-mid: 118 75 162; /* #764ba2 */
+  --color-gradient-end: 240 147 251; /* #f093fb */
   --color-background: 255 255 255;
   --color-surface: 250 250 250; /* neutral-50 */
   --color-surface-light: 255 255 255; /* white */
@@ -194,7 +199,7 @@ h6 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  background: linear-gradient(135deg, rgb(var(--color-gradient-start)), rgb(var(--color-gradient-mid)));
   color: white;
 }
 
