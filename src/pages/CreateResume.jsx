@@ -69,7 +69,7 @@ function CreateResume() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
-  const [previewScale, setPreviewScale] = useState('75'); // Default to 75% zoom
+  const [previewScale, setPreviewScale] = useState('100'); // Changed default to 100% zoom
 
   // Check authentication state first
   if (authLoading) {
@@ -99,68 +99,80 @@ function CreateResume() {
       </div>
     );
   }
-  
+
   // Calculate completion percentage for each section
   const calculateCompletion = (section) => {
     // Ensure resumeData and its properties exist before accessing
     if (!resumeData) return 0;
-    
+
     if (section === 'personal') {
       const personalInfo = resumeData.personalInfo || {};
       const { fullName, email } = personalInfo;
       const requiredFields = [fullName, email];
-      const filledFields = requiredFields.filter(field => field && field.trim() !== '');
-      return Math.round((filledFields.length / requiredFields.length) * 100);
+      const optionalFields = [personalInfo.phone, personalInfo.address, personalInfo.jobTitle,
+                             personalInfo.linkedin, personalInfo.github, personalInfo.website];
+
+      const filledRequired = requiredFields.filter(field => field && field.trim() !== '');
+      const filledOptional = optionalFields.filter(field => field && field.trim() !== '');
+
+      // Calculate completion: 50% for required fields, 50% for optional fields
+      const requiredCompletion = (filledRequired.length / requiredFields.length) * 50;
+      const optionalCompletion = (filledOptional.length / optionalFields.length) * 50;
+
+      return Math.round(requiredCompletion + optionalCompletion);
     }
-    
+
     if (section === 'education') {
       const education = resumeData.education || [];
-      const filledEducations = education.filter(edu => 
+      const filledEducations = education.filter(edu =>
         edu.institution || edu.degree || edu.fieldOfStudy
       );
       return filledEducations.length > 0 ? 100 : 0;
     }
-    
+
     if (section === 'experience') {
       const experience = resumeData.experience || [];
-      const filledExperiences = experience.filter(exp => 
+      const filledExperiences = experience.filter(exp =>
         exp.company || exp.position || exp.description
       );
       return filledExperiences.length > 0 ? 100 : 0;
     }
-    
+
     if (section === 'skills') {
       const skills = resumeData.skills || [];
-      const filledSkills = skills.filter(skill => 
+      const filledSkills = skills.filter(skill =>
         skill.name
       );
       return filledSkills.length > 0 ? 100 : 0;
     }
-    
+
     if (section === 'projects') {
       const projects = resumeData.projects || [];
-      const filledProjects = projects.filter(project => 
+      const filledProjects = projects.filter(project =>
         project.name || project.description
       );
       return filledProjects.length > 0 ? 100 : 0;
     }
-    
+
     if (section === 'certifications') {
       const certifications = resumeData.certifications || [];
-      const filledCerts = certifications.filter(cert => 
+      const filledCerts = certifications.filter(cert =>
         cert.name || cert.issuer
       );
       return filledCerts.length > 0 ? 100 : 0;
     }
-    
+
     if (section === 'summary') {
       const personalInfo = resumeData.personalInfo || {};
-      return personalInfo.summary ? 100 : 0;
+      const hasSummary = personalInfo.summary ? 1 : 0;
+      const totalFields = 1;
+      const filledFields = hasSummary;
+      return Math.round((filledFields / totalFields) * 100);
     }
-    
+
     return 0;
   };
-  
+
   // Overall completion percentage
   const overallCompletion = () => {
     if (!resumeData) return 0;
@@ -180,7 +192,7 @@ function CreateResume() {
       console.log('No current user, cannot load resume');
       return;
     }
-    
+
     if (!id) {
       console.log('No resume ID provided');
       return;
@@ -268,10 +280,10 @@ function CreateResume() {
 
   const validateField = (section, field, value) => {
     const errors = { ...validationErrors };
-    
+
     // Clear previous error for this field
     delete errors[`${section}.${field}`];
-    
+
     // Validation rules
     if (section === 'personalInfo') {
       if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
@@ -290,7 +302,7 @@ function CreateResume() {
         errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
       }
     }
-    
+
     setValidationErrors(errors);
   };
 
@@ -411,15 +423,18 @@ function CreateResume() {
   ];
 
   const LivePreview = () => (
-    <div id="resume-preview" className="create-resume-preview-paper">
+    <div id="resume-preview" className="create-resume-preview-paper-responsive">
       {/* Header */}
       <div className="create-resume-preview-header-section">
         <h1 className="create-resume-preview-name">{resumeData.personalInfo.fullName || 'Your Name'}</h1>
+        {resumeData.personalInfo.jobTitle && (
+          <p className="create-resume-preview-title-role">{resumeData.personalInfo.jobTitle}</p>
+        )}
         <div className="create-resume-preview-contact">
           {resumeData.personalInfo.email && <span><Mail className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.email}</span>}
           {resumeData.personalInfo.phone && <span><Phone className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.phone}</span>}
           {resumeData.personalInfo.address && <span><MapPin className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.address}</span>}
-          {resumeData.personalInfo.linkedin && <span><ExternalLink className="inline w-4 h-4 mr-1" /> LinkedIn: {resumeData.personalInfo.linkedin}</span>}
+          {resumeData.personalInfo.linkedin && <span><ExternalLink className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.linkedin}</span>}
         </div>
       </div>
 
@@ -447,7 +462,7 @@ function CreateResume() {
           ))}
         </div>
       )}
-  
+
       {resumeData.education.filter(edu => edu.institution || edu.degree).length > 0 && (
         <div className="create-resume-preview-section">
           <h2 className="create-resume-preview-section-title">Education</h2>
@@ -478,7 +493,7 @@ function CreateResume() {
         </div>
       )}
 
-    
+
       {resumeData.projects.filter(project => project.name || project.description).length > 0 && (
         <div className="create-resume-preview-section">
           <h2 className="create-resume-preview-section-title">Projects</h2>
@@ -1257,6 +1272,7 @@ function CreateResume() {
                     <h3 className="create-resume-preview-title">Live Preview</h3>
                   </div>
                   <div className="create-resume-preview-actions">
+                    <span className="text-sm text-gray-600 dark:text-gray-300 mr-2">Zoom:</span>
                     <button
                       onClick={() => setPreviewScale('75')}
                       className={`zoom-btn ${previewScale === '75' ? 'active' : ''}`}

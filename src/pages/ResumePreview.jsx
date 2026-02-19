@@ -132,13 +132,37 @@ function ResumePreview() {
             <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">
               {resumeData.personalInfo.fullName || 'Your Name'}
             </h1>
+            {resumeData.personalInfo.jobTitle && (
+              <p className="text-xl font-semibold text-center text-gray-700 mb-2">
+                {resumeData.personalInfo.jobTitle}
+              </p>
+            )}
             <div className="text-center text-gray-600 d-grid gap-1">
               {resumeData.personalInfo.email && <p className="d-flex items-center justify-center"><Mail className="w-4 h-4 mr-2 inline" /> {resumeData.personalInfo.email}</p>}
               {resumeData.personalInfo.phone && <p className="d-flex items-center justify-center"><Phone className="w-4 h-4 mr-2 inline" /> {resumeData.personalInfo.phone}</p>}
               {resumeData.personalInfo.address && <p className="d-flex items-center justify-center"><MapPin className="w-4 h-4 mr-2 inline" /> {resumeData.personalInfo.address}</p>}
               {resumeData.personalInfo.linkedin && <p className="d-flex items-center justify-center"><ExternalLink className="w-4 h-4 mr-2 inline" /> {resumeData.personalInfo.linkedin}</p>}
+              {resumeData.personalInfo.dob && (() => {
+                try {
+                  const date = new Date(resumeData.personalInfo.dob);
+                  if (isNaN(date.getTime())) return null;
+                  return <p className="d-flex items-center justify-center"><Calendar className="w-4 h-4 mr-2 inline" /> DOB: {date.toLocaleDateString()}</p>;
+                } catch (e) {
+                  return null;
+                }
+              })()}
+              {resumeData.personalInfo.nationality && <p className="d-flex items-center justify-center"><MapPin className="w-4 h-4 mr-2 inline" /> Nationality: {resumeData.personalInfo.nationality}</p>}
+              {resumeData.personalInfo.maritalStatus && <p className="d-flex items-center justify-center"><User className="w-4 h-4 mr-2 inline" /> {resumeData.personalInfo.maritalStatus}</p>}
             </div>
           </div>
+
+          {/* Objective */}
+          {resumeData.personalInfo.objective && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2 border-b pb-1">OBJECTIVE</h2>
+              <p className="text-gray-700 leading-relaxed">{resumeData.personalInfo.objective}</p>
+            </div>
+          )}
 
           {/* Summary */}
           {resumeData.personalInfo.summary && (
@@ -236,6 +260,11 @@ function ResumePreview() {
             <h1 className="text-3xl font-bold text-gray-900 mb-1">
               {resumeData.personalInfo.fullName || 'Your Name'}
             </h1>
+            {resumeData.personalInfo.jobTitle && (
+              <p className="text-xl font-semibold text-gray-700 mb-2">
+                {resumeData.personalInfo.jobTitle}
+              </p>
+            )}
             <p className="text-lg text-gray-600 mb-4">
               {resumeData.personalInfo.address || 'Professional Title'}
             </p>
@@ -265,8 +294,42 @@ function ResumePreview() {
                   {resumeData.personalInfo.website.replace('https://', '')}
                 </div>
               )}
+              {resumeData.personalInfo.dob && (() => {
+                try {
+                  const date = new Date(resumeData.personalInfo.dob);
+                  if (isNaN(date.getTime())) return null;
+                  return (
+                    <div className="d-flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      DOB: {date.toLocaleDateString()}
+                    </div>
+                  );
+                } catch (e) {
+                  return null;
+                }
+              })()}
+              {resumeData.personalInfo.nationality && (
+                <div className="d-flex items-center">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Nationality: {resumeData.personalInfo.nationality}
+                </div>
+              )}
+              {resumeData.personalInfo.maritalStatus && (
+                <div className="d-flex items-center">
+                  <User className="w-4 h-4 mr-2" />
+                  {resumeData.personalInfo.maritalStatus}
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Objective */}
+          {resumeData.personalInfo.objective && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800">CAREER OBJECTIVE</h2>
+              <p className="text-gray-700 leading-relaxed">{resumeData.personalInfo.objective}</p>
+            </div>
+          )}
 
           {/* Summary */}
           {resumeData.personalInfo.summary && (
@@ -352,6 +415,11 @@ function ResumePreview() {
             <h1 className="text-3xl font-bold mb-2">
               {resumeData.personalInfo.fullName || 'Your Name'}
             </h1>
+            {resumeData.personalInfo.jobTitle && (
+              <p className="text-xl font-semibold mb-2">
+                {resumeData.personalInfo.jobTitle}
+              </p>
+            )}
             <p className="text-indigo-100 mb-4">
               {resumeData.personalInfo.address || 'Professional Title'}
             </p>
@@ -375,8 +443,42 @@ function ResumePreview() {
                   {resumeData.personalInfo.linkedin.replace('https://', '')}
                 </div>
               )}
+              {resumeData.personalInfo.dob && (() => {
+                try {
+                  const date = new Date(resumeData.personalInfo.dob);
+                  if (isNaN(date.getTime())) return null;
+                  return (
+                    <div className="d-flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      DOB: {date.toLocaleDateString()}
+                    </div>
+                  );
+                } catch (e) {
+                  return null;
+                }
+              })()}
+              {resumeData.personalInfo.nationality && (
+                <div className="d-flex items-center">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Nationality: {resumeData.personalInfo.nationality}
+                </div>
+              )}
+              {resumeData.personalInfo.maritalStatus && (
+                <div className="d-flex items-center">
+                  <User className="w-4 h-4 mr-2" />
+                  {resumeData.personalInfo.maritalStatus}
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Objective */}
+          {resumeData.personalInfo.objective && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800 border-l-4 border-indigo-600 pl-3">CAREER OBJECTIVE</h2>
+              <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">{resumeData.personalInfo.objective}</p>
+            </div>
+          )}
 
           {/* Summary */}
           {resumeData.personalInfo.summary && (
