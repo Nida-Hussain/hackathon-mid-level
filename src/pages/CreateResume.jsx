@@ -45,6 +45,11 @@ function CreateResume() {
   const { currentUser, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  
+  console.log('CreateResume - id:', id);
+  console.log('CreateResume - currentUser:', currentUser?.email);
+  console.log('CreateResume - authLoading:', authLoading);
+  
   const [resumeData, setResumeData] = useState({
     title: 'Untitled Resume',
     templateId: 'modern',
@@ -69,7 +74,7 @@ function CreateResume() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
-  const [previewScale, setPreviewScale] = useState('100'); // Changed default to 100% zoom
+  const [previewScale, setPreviewScale] = useState('100');
   const [loadingResume, setLoadingResume] = useState(false);
 
   // Load resume data when id or currentUser changes
@@ -80,21 +85,23 @@ function CreateResume() {
     }
   }, [id, currentUser]);
 
-  // Check authentication state first
+  // Show loading while loading auth/resume
   if (authLoading || (id && loadingResume)) {
+    console.log('Showing loading screen...');
     return (
-      <div className="create-resume-bg d-flex-items-center-justify-center">
+      <div className="create-resume-bg d-flex-items-center-justify-center" style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-white mt-4">{id ? 'Loading your resume...' : 'Loading your account...'}</p>
+          <p className="text-white mt-4">{id ? 'Loading your resume...' : 'Loading...'}</p>
         </div>
       </div>
     );
   }
 
   if (!currentUser) {
+    console.log('No user - redirecting to login');
     return (
-      <div className="create-resume-bg d-flex-items-center-justify-center">
+      <div className="create-resume-bg d-flex-items-center-justify-center" style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Access Denied</h2>
           <p className="text-white mb-4">You must be logged in to create a resume.</p>
@@ -108,6 +115,8 @@ function CreateResume() {
       </div>
     );
   }
+  
+  console.log('Rendering CreateResume component...');
 
   // Calculate completion percentage for each section
   const calculateCompletion = (section) => {
@@ -190,12 +199,6 @@ function CreateResume() {
     return Math.round((completedSections.length / sections.length) * 100);
   };
 
-  useEffect(() => {
-    if (id && currentUser) {
-      loadResume();
-    }
-  }, [id, currentUser]);
-
   const loadResume = async () => {
     if (!currentUser) {
       console.log('No current user, cannot load resume');
@@ -216,7 +219,27 @@ function CreateResume() {
 
       if (docSnap.exists()) {
         console.log('Resume data loaded:', docSnap.data());
-        setResumeData(docSnap.data());
+        const data = docSnap.data();
+        // Ensure all required fields exist
+        setResumeData({
+          title: data.title || 'Untitled Resume',
+          templateId: data.templateId || 'modern',
+          personalInfo: data.personalInfo || {
+            fullName: '',
+            email: '',
+            phone: '',
+            address: '',
+            linkedin: '',
+            github: '',
+            website: '',
+            summary: ''
+          },
+          education: data.education || [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
+          experience: data.experience || [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
+          skills: data.skills || [{ name: '', level: 'Intermediate' }],
+          projects: data.projects || [{ name: '', description: '', technologies: '', link: '' }],
+          certifications: data.certifications || [{ name: '', issuer: '', date: '', credentialId: '' }]
+        });
       } else {
         console.log('Resume document does not exist');
         // Initialize with empty data if document doesn't exist
@@ -242,6 +265,7 @@ function CreateResume() {
       }
     } catch (error) {
       console.error('Error loading resume:', error);
+      console.error('Error details:', error.message, error.code);
       // Set default data in case of error
       setResumeData({
         title: 'Untitled Resume',

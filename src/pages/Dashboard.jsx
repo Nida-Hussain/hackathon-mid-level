@@ -313,7 +313,14 @@ function Dashboard() {
                 <div className="quick-action-title">New Resume</div>
                 <div className="quick-action-desc">Create a professional resume</div>
               </div>
-              <div className={`quick-action-card ${theme}`} onClick={() => navigate('/create-resume')}>
+              <div className={`quick-action-card ${theme}`} onClick={() => {
+                if (filteredResumes.length > 0) {
+                  navigate(`/create-resume/${filteredResumes[0].id}`);
+                } else {
+                  // If no resumes, create a new one
+                  createNewResume();
+                }
+              }}>
                 <div className="quick-action-icon">
                   <Edit3 className="w-6 h-6 text-white" />
                 </div>

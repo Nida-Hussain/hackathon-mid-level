@@ -23,7 +23,6 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/create-resume" element={<ProtectedRoute><CreateResume /></ProtectedRoute>} />
               <Route path="/create-resume/:id" element={<ProtectedRoute><CreateResume /></ProtectedRoute>} />
               <Route path="/resume/:id" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />
             </Routes>
