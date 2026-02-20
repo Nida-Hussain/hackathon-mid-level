@@ -70,14 +70,23 @@ function CreateResume() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewScale, setPreviewScale] = useState('100'); // Changed default to 100% zoom
+  const [loadingResume, setLoadingResume] = useState(false);
+
+  // Load resume data when id or currentUser changes
+  useEffect(() => {
+    if (id && currentUser) {
+      setLoadingResume(true);
+      loadResume();
+    }
+  }, [id, currentUser]);
 
   // Check authentication state first
-  if (authLoading) {
+  if (authLoading || (id && loadingResume)) {
     return (
       <div className="create-resume-bg d-flex-items-center-justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-white mt-4">Loading your account...</p>
+          <p className="text-white mt-4">{id ? 'Loading your resume...' : 'Loading your account...'}</p>
         </div>
       </div>
     );
@@ -190,11 +199,13 @@ function CreateResume() {
   const loadResume = async () => {
     if (!currentUser) {
       console.log('No current user, cannot load resume');
+      setLoadingResume(false);
       return;
     }
 
     if (!id) {
       console.log('No resume ID provided');
+      setLoadingResume(false);
       return;
     }
 
@@ -251,6 +262,8 @@ function CreateResume() {
         projects: [{ name: '', description: '', technologies: '', link: '' }],
         certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
       });
+    } finally {
+      setLoadingResume(false);
     }
   };
 
@@ -680,15 +693,16 @@ function CreateResume() {
           </button>
         </div>
 
-        {/* Main Editor */}
+        {/* Main Editor - Fixed height container */}
         <div className="create-resume-editor">
           <div className="create-resume-editor-grid">
-            {/* Form Section */}
+            {/* Form Section - Independently scrollable */}
             <div className="create-resume-form-section">
               {activeSection === 'personal' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                   className={`create-resume-card personal ${theme === 'dark' ? 'dark-mode' : ''} create-resume-animate`}
                 >
                   <div className="create-resume-card-header">
@@ -840,6 +854,7 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                   className="create-resume-card education create-resume-animate"
                 >
                   <div className="create-resume-card-header">
@@ -856,91 +871,123 @@ function CreateResume() {
                     </button>
                   </div>
 
-                  <div className="grid gap-4">
-                    {(resumeData.education || []).map((edu, index) => (
-                      <div key={index} className="create-resume-item">
-                        <button
-                          onClick={() => removeItem('education', index)}
-                          className="create-resume-remove-btn"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-
-                        <div className="create-resume-form-grid">
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Institution</label>
-                            <input
-                              type="text"
-                              value={edu?.institution || ''}
-                              onChange={(e) => handleInputChange('education', 'institution', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="University Name"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Degree</label>
-                            <input
-                              type="text"
-                              value={edu?.degree || ''}
-                              onChange={(e) => handleInputChange('education', 'degree', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Bachelor's, Master's, etc."
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Field of Study</label>
-                            <input
-                              type="text"
-                              value={edu?.fieldOfStudy || ''}
-                              onChange={(e) => handleInputChange('education', 'fieldOfStudy', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Computer Science, Business, etc."
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Grade/GPA</label>
-                            <input
-                              type="text"
-                              value={edu?.grade || ''}
-                              onChange={(e) => handleInputChange('education', 'grade', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="3.8/4.0, A-, etc."
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Start Date</label>
-                            <input
-                              type="month"
-                              value={edu?.startDate || ''}
-                              onChange={(e) => handleInputChange('education', 'startDate', e.target.value, index)}
-                              className="create-resume-form-input"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">End Date</label>
-                            <input
-                              type="month"
-                              value={edu?.endDate || ''}
-                              onChange={(e) => handleInputChange('education', 'endDate', e.target.value, index)}
-                              className="create-resume-form-input"
-                            />
-                          </div>
+                  <div className="create-resume-form-grid personal-info-grid">
+                    {(resumeData.education || []).length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                          <GraduationCap className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                         </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          No education added yet
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          Click the "Add" button to add your educational background
+                        </p>
+                        <button
+                          onClick={() => addNewItem('education')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Your First Education
+                        </button>
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {resumeData.education.map((edu, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="create-resume-item group"
+                          >
+                            <button
+                              onClick={() => removeItem('education', index)}
+                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              title="Remove this education"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="create-resume-form-grid">
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Institution</label>
+                                <input
+                                  type="text"
+                                  value={edu?.institution || ''}
+                                  onChange={(e) => handleInputChange('education', 'institution', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="University Name"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Degree</label>
+                                <input
+                                  type="text"
+                                  value={edu?.degree || ''}
+                                  onChange={(e) => handleInputChange('education', 'degree', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Bachelor's, Master's, etc."
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Field of Study</label>
+                                <input
+                                  type="text"
+                                  value={edu?.fieldOfStudy || ''}
+                                  onChange={(e) => handleInputChange('education', 'fieldOfStudy', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Computer Science, Business, etc."
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Grade/GPA</label>
+                                <input
+                                  type="text"
+                                  value={edu?.grade || ''}
+                                  onChange={(e) => handleInputChange('education', 'grade', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="3.8/4.0, A-, etc."
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Start Date</label>
+                                <input
+                                  type="month"
+                                  value={edu?.startDate || ''}
+                                  onChange={(e) => handleInputChange('education', 'startDate', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">End Date</label>
+                                <input
+                                  type="month"
+                                  value={edu?.endDate || ''}
+                                  onChange={(e) => handleInputChange('education', 'endDate', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                />
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}
 
               {activeSection === 'experience' && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 20 }} 
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                   className="create-resume-card experience create-resume-animate"
                 >
                   <div className="create-resume-card-header">
@@ -957,84 +1004,115 @@ function CreateResume() {
                     </button>
                   </div>
 
-                  <div className="d-grid gap-4">
-                    {(resumeData.experience || []).map((exp, index) => (
-                      <div key={index} className="create-resume-item">
+                  <div className="create-resume-form-grid personal-info-grid">
+                    {(resumeData.experience || []).length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                          <Briefcase className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          No work experience added yet
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          Click the "Add" button to add your work history
+                        </p>
                         <button
-                          onClick={() => removeItem('experience', index)}
-                          className="create-resume-remove-btn"
+                          onClick={() => addNewItem('experience')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
                         >
-                          <X className="w-4 h-4" />
+                          <Plus className="w-4 h-4" />
+                          Add Your First Experience
                         </button>
-
-                        <div className="create-resume-form-grid">
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Company</label>
-                            <input
-                              type="text"
-                              value={exp?.company || ''}
-                              onChange={(e) => handleInputChange('experience', 'company', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Company Name"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Position</label>
-                            <input
-                              type="text"
-                              value={exp?.position || ''}
-                              onChange={(e) => handleInputChange('experience', 'position', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Job Title"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Location</label>
-                            <input
-                              type="text"
-                              value={exp?.location || ''}
-                              onChange={(e) => handleInputChange('experience', 'location', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="City, State"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Start Date</label>
-                            <input
-                              type="month"
-                              value={exp?.startDate || ''}
-                              onChange={(e) => handleInputChange('experience', 'startDate', e.target.value, index)}
-                              className="create-resume-form-input"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">End Date</label>
-                            <input
-                              type="month"
-                              value={exp?.endDate || ''}
-                              onChange={(e) => handleInputChange('experience', 'endDate', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Leave blank if current"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <label className="create-resume-form-label">Description</label>
-                          <textarea
-                            value={exp?.description || ''}
-                            onChange={(e) => handleInputChange('experience', 'description', e.target.value, index)}
-                            className="create-resume-form-textarea"
-                            placeholder="Describe your responsibilities and achievements..."
-                            rows="3"
-                          />
-                        </div>
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {resumeData.experience.map((exp, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="create-resume-item group"
+                          >
+                            <button
+                              onClick={() => removeItem('experience', index)}
+                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              title="Remove this experience"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="create-resume-form-grid">
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Company</label>
+                                <input
+                                  type="text"
+                                  value={exp?.company || ''}
+                                  onChange={(e) => handleInputChange('experience', 'company', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Company Name"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Position</label>
+                                <input
+                                  type="text"
+                                  value={exp?.position || ''}
+                                  onChange={(e) => handleInputChange('experience', 'position', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Job Title"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Location</label>
+                                <input
+                                  type="text"
+                                  value={exp?.location || ''}
+                                  onChange={(e) => handleInputChange('experience', 'location', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="City, State"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Start Date</label>
+                                <input
+                                  type="month"
+                                  value={exp?.startDate || ''}
+                                  onChange={(e) => handleInputChange('experience', 'startDate', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">End Date</label>
+                                <input
+                                  type="month"
+                                  value={exp?.endDate || ''}
+                                  onChange={(e) => handleInputChange('experience', 'endDate', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Leave blank if current"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="create-resume-form-field mt-4">
+                              <label className="create-resume-form-label">Description</label>
+                              <textarea
+                                value={exp?.description || ''}
+                                onChange={(e) => handleInputChange('experience', 'description', e.target.value, index)}
+                                className="create-resume-form-textarea"
+                                placeholder="Describe your responsibilities and achievements..."
+                                rows="3"
+                              />
+                            </div>
+                          </motion.div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1043,6 +1121,7 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                   className="create-resume-card skills create-resume-animate"
                 >
                   <div className="create-resume-card-header">
@@ -1059,44 +1138,75 @@ function CreateResume() {
                     </button>
                   </div>
 
-                  <div className="d-grid gap-4">
-                    {(resumeData.skills || []).map((skill, index) => (
-                      <div key={index} className="create-resume-item">
-                        <button
-                          onClick={() => removeItem('skills', index)}
-                          className="create-resume-remove-btn"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-
-                        <div className="create-resume-form-grid">
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Skill Name</label>
-                            <input
-                              type="text"
-                              value={skill?.name || ''}
-                              onChange={(e) => handleInputChange('skills', 'name', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="JavaScript, Python, Leadership..."
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Proficiency Level</label>
-                            <select
-                              value={skill?.level || 'Intermediate'}
-                              onChange={(e) => handleInputChange('skills', 'level', e.target.value, index)}
-                              className="create-resume-form-select"
-                            >
-                              <option value="Beginner">Beginner</option>
-                              <option value="Intermediate">Intermediate</option>
-                              <option value="Advanced">Advanced</option>
-                              <option value="Expert">Expert</option>
-                            </select>
-                          </div>
+                  <div className="create-resume-form-grid personal-info-grid">
+                    {(resumeData.skills || []).length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                          <Code className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                         </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          No skills added yet
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          Click the "Add" button to add your technical and soft skills
+                        </p>
+                        <button
+                          onClick={() => addNewItem('skills')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Your First Skill
+                        </button>
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {resumeData.skills.map((skill, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="create-resume-item group"
+                          >
+                            <button
+                              onClick={() => removeItem('skills', index)}
+                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              title="Remove this skill"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="create-resume-form-grid">
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Skill Name</label>
+                                <input
+                                  type="text"
+                                  value={skill?.name || ''}
+                                  onChange={(e) => handleInputChange('skills', 'name', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="JavaScript, Python, Leadership..."
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Proficiency Level</label>
+                                <select
+                                  value={skill?.level || 'Intermediate'}
+                                  onChange={(e) => handleInputChange('skills', 'level', e.target.value, index)}
+                                  className="create-resume-form-select"
+                                >
+                                  <option value="Beginner">Beginner</option>
+                                  <option value="Intermediate">Intermediate</option>
+                                  <option value="Advanced">Advanced</option>
+                                  <option value="Expert">Expert</option>
+                                </select>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1105,6 +1215,7 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                   className="create-resume-card projects create-resume-animate"
                 >
                   <div className="create-resume-card-header">
@@ -1121,63 +1232,94 @@ function CreateResume() {
                     </button>
                   </div>
 
-                  <div className="d-grid gap-4">
-                    {(resumeData.projects || []).map((project, index) => (
-                      <div key={index} className="create-resume-item">
+                  <div className="create-resume-form-grid personal-info-grid">
+                    {(resumeData.projects || []).length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                          <Award className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          No projects added yet
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          Click the "Add" button to showcase your work
+                        </p>
                         <button
-                          onClick={() => removeItem('projects', index)}
-                          className="create-resume-remove-btn"
+                          onClick={() => addNewItem('projects')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
                         >
-                          <X className="w-4 h-4" />
+                          <Plus className="w-4 h-4" />
+                          Add Your First Project
                         </button>
-
-                        <div className="create-resume-form-grid">
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Project Name</label>
-                            <input
-                              type="text"
-                              value={project?.name || ''}
-                              onChange={(e) => handleInputChange('projects', 'name', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Project Name"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Technologies Used</label>
-                            <input
-                              type="text"
-                              value={project?.technologies || ''}
-                              onChange={(e) => handleInputChange('projects', 'technologies', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="React, Node.js, MongoDB..."
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Project Link</label>
-                            <input
-                              type="url"
-                              value={project?.link || ''}
-                              onChange={(e) => handleInputChange('projects', 'link', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="https://project-url.com"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <label className="create-resume-form-label">Description</label>
-                          <textarea
-                            value={project?.description || ''}
-                            onChange={(e) => handleInputChange('projects', 'description', e.target.value, index)}
-                            className="create-resume-form-textarea"
-                            placeholder="Describe the project, your role, and key accomplishments..."
-                            rows="3"
-                          />
-                        </div>
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {resumeData.projects.map((project, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="create-resume-item group"
+                          >
+                            <button
+                              onClick={() => removeItem('projects', index)}
+                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              title="Remove this project"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="create-resume-form-grid">
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Project Name</label>
+                                <input
+                                  type="text"
+                                  value={project?.name || ''}
+                                  onChange={(e) => handleInputChange('projects', 'name', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Project Name"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Technologies Used</label>
+                                <input
+                                  type="text"
+                                  value={project?.technologies || ''}
+                                  onChange={(e) => handleInputChange('projects', 'technologies', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="React, Node.js, MongoDB..."
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Project Link</label>
+                                <input
+                                  type="url"
+                                  value={project?.link || ''}
+                                  onChange={(e) => handleInputChange('projects', 'link', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="https://project-url.com"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="create-resume-form-field mt-4">
+                              <label className="create-resume-form-label">Description</label>
+                              <textarea
+                                value={project?.description || ''}
+                                onChange={(e) => handleInputChange('projects', 'description', e.target.value, index)}
+                                className="create-resume-form-textarea"
+                                placeholder="Describe the project, your role, and key accomplishments..."
+                                rows="3"
+                              />
+                            </div>
+                          </motion.div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1186,6 +1328,7 @@ function CreateResume() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                   className="create-resume-card certifications create-resume-animate"
                 >
                   <div className="create-resume-card-header">
@@ -1202,62 +1345,93 @@ function CreateResume() {
                     </button>
                   </div>
 
-                  <div className="d-grid gap-4">
-                    {(resumeData.certifications || []).map((cert, index) => (
-                      <div key={index} className="create-resume-item">
-                        <button
-                          onClick={() => removeItem('certifications', index)}
-                          className="create-resume-remove-btn"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-
-                        <div className="create-resume-form-grid">
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Certification Name</label>
-                            <input
-                              type="text"
-                              value={cert?.name || ''}
-                              onChange={(e) => handleInputChange('certifications', 'name', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="AWS Certified Developer"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Issuer</label>
-                            <input
-                              type="text"
-                              value={cert?.issuer || ''}
-                              onChange={(e) => handleInputChange('certifications', 'issuer', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="Amazon Web Services"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Date</label>
-                            <input
-                              type="month"
-                              value={cert?.date || ''}
-                              onChange={(e) => handleInputChange('certifications', 'date', e.target.value, index)}
-                              className="create-resume-form-input"
-                            />
-                          </div>
-
-                          <div className="create-resume-form-field">
-                            <label className="create-resume-form-label">Credential ID</label>
-                            <input
-                              type="text"
-                              value={cert?.credentialId || ''}
-                              onChange={(e) => handleInputChange('certifications', 'credentialId', e.target.value, index)}
-                              className="create-resume-form-input"
-                              placeholder="ID-123456"
-                            />
-                          </div>
+                  <div className="create-resume-form-grid personal-info-grid">
+                    {(resumeData.certifications || []).length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                          <Award className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                         </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          No certifications added yet
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          Click the "Add" button to add your certifications
+                        </p>
+                        <button
+                          onClick={() => addNewItem('certifications')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Your First Certification
+                        </button>
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {resumeData.certifications.map((cert, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="create-resume-item group"
+                          >
+                            <button
+                              onClick={() => removeItem('certifications', index)}
+                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              title="Remove this certification"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+
+                            <div className="create-resume-form-grid">
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Certification Name</label>
+                                <input
+                                  type="text"
+                                  value={cert?.name || ''}
+                                  onChange={(e) => handleInputChange('certifications', 'name', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="AWS Certified Developer"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Issuer</label>
+                                <input
+                                  type="text"
+                                  value={cert?.issuer || ''}
+                                  onChange={(e) => handleInputChange('certifications', 'issuer', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="Amazon Web Services"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Date</label>
+                                <input
+                                  type="month"
+                                  value={cert?.date || ''}
+                                  onChange={(e) => handleInputChange('certifications', 'date', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                />
+                              </div>
+
+                              <div className="create-resume-form-field">
+                                <label className="create-resume-form-label">Credential ID</label>
+                                <input
+                                  type="text"
+                                  value={cert?.credentialId || ''}
+                                  onChange={(e) => handleInputChange('certifications', 'credentialId', e.target.value, index)}
+                                  className="create-resume-form-input"
+                                  placeholder="ID-123456"
+                                />
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}

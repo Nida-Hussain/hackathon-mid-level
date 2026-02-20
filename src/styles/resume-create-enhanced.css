@@ -3,11 +3,11 @@
 /* Color Variables - Modern, Appealing Palette */
 :root {
   /* Light Mode Colors - Vibrant Ocean Gradient */
-  --primary-light-1: #2196F3;
-  --primary-light-2: #21CBF3;
-  --primary-light-3: #00BCD4;
-  --primary-light-4: #00ACC1;
-  --primary-light-5: #0097A7;
+  --primary-light-1: #035293;
+  --primary-light-2: #2b5862;
+  --primary-light-3: #074750;
+  --primary-light-4: #37666c;
+  --primary-light-5: #121f21;
 
   /* Dark Mode Colors - Deep Space Gradient */
   --primary-dark-1: #0D1117;
@@ -17,30 +17,30 @@
   --primary-dark-5: #484F58;
 
   /* Accents - Vibrant, Modern palette */
-  --accent-primary: #3B82F6; /* Bright Blue */
-  --accent-secondary: #8B5CF6; /* Vibrant Violet */
-  --accent-tertiary: #06B6D4; /* Cyan */
-  --accent-success: #10B981; /* Emerald */
-  --accent-warning: #F59E0B; /* Amber */
-  --accent-error: #EF4444; /* Red */
-  --accent-pink: #EC4899; /* Pink */
+  --accent-primary: #084cba; /* Bright Blue */
+  --accent-secondary: #4a1eb0; /* Vibrant Violet */
+  --accent-tertiary: #245962; /* Cyan */
+  --accent-success: #3a574d; /* Emerald */
+  --accent-warning: #b69f601d; /* Amber */
+  --accent-error: #681c1c; /* Red */
+  --accent-pink: #5c3448; /* Pink */
 
   /* Text Colors */
   --text-light: #0F172A; /* Deep slate */
-  --text-dark: #F1F5F9; /* Bright slate */
+  --text-dark: #f1f5f94c; /* Bright slate */
   --text-lighter: #475569; /* Medium slate */
   --text-darker: #94A3B8; /* Light slate */
 
   /* Backgrounds */
-  --background-light: #F8FAFC;
+  --background-light: #f8fafc80;
   --background-dark: #0D1117;
-  --card-bg-light: #FFFFFF;
+  --card-bg-light: #ffffff5b;
   --card-bg-dark: #1E293B;
-  --surface-light: #FFFFFF;
+  --surface-light: #ffffff5e;
   --surface-dark: #1E293B;
 
   /* Glass Effects */
-  --glass-light: rgba(255, 255, 255, 0.85);
+  --glass-light: rgba(255, 255, 255, 0.164);
   --glass-dark: rgba(15, 23, 42, 0.85);
   --glass-border-light: rgba(255, 255, 255, 0.18);
   --glass-border-dark: rgba(255, 255, 255, 0.1);
@@ -78,7 +78,7 @@
   --primary-light-3: #1e3a8a;
   --primary-light-4: #1e293b;
   --primary-light-5: #0f172a;
-  --text-light: #F1F5F9;
+  --text-light: #f1f5f965;
   --text-lighter: #94A3B8;
   --background-light: #0D1117;
   --card-bg-light: #1E293B;
@@ -114,7 +114,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.377) 0%, rgba(248, 250, 252, 0.568) 100%);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.15);
@@ -181,11 +181,11 @@
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
 
-/* Main Content Layout */
+/* Main Content Layout - Fixed height for scrollable form area */
 .create-resume-main {
   display: flex;
-  height: calc(100vh - 8rem);
-  min-height: 600px;
+  height: calc(100vh - 5.5rem); /* Account for navbar with margin */
+  min-height: 500px;
   overflow: hidden;
   max-width: 100vw;
 }
@@ -193,7 +193,7 @@
 /* Sidebar Styles - Enhanced Glassmorphism */
 .create-resume-sidebar {
   width: 300px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.478) 0%, rgba(248, 250, 252, 0.456) 100%);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-right: 1px solid rgba(59, 130, 246, 0.15);
@@ -260,7 +260,7 @@
 }
 
 .create-resume-sidebar-title.dark-mode {
-  background: linear-gradient(135deg, #60A5FA, #A78BFA);
+  background: linear-gradient(135deg, #4679b6, #7c63c7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -409,7 +409,7 @@
 }
 
 .create-resume-nav-item.dark-mode .create-resume-nav-label {
-  color: rgba(241, 245, 249, 0.9);
+  color: rgba(241, 245, 249, 0.488);
 }
 
 .create-resume-nav-item:hover .create-resume-nav-label {
@@ -469,23 +469,146 @@
   font-weight: 700;
 }
 
-/* Main Editor Area - Enhanced */
+/* Main Editor Area - Fixed height container */
 .create-resume-editor {
   flex: 1;
   padding: var(--spacing-xl);
-  overflow-y: auto;
   background: rgba(248, 250, 252, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   height: 100%;
+  overflow: hidden; /* Prevent editor itself from scrolling */
+  display: flex;
+  flex-direction: column;
 }
 
 .create-resume-editor-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr;
   gap: var(--spacing-xl);
-  max-width: 100%;
   height: 100%;
+  min-height: 0; /* Allow grid items to shrink */
+}
+
+@media (min-width: 1024px) {
+  .create-resume-editor-grid {
+    grid-template-columns: 1fr 45%;
+    gap: var(--spacing-xl);
+  }
+}
+
+/* Form Section - Independently Scrollable */
+.create-resume-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  flex: 1 1 auto;
+  min-height: 0; /* Critical for nested scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-lg) var(--spacing-lg) calc(var(--spacing-xl) + 2rem);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Preview Wrapper - for sticky positioning */
+.create-resume-preview-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Preview Section - Sticky on Large Screens */
+.create-resume-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 12rem);
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .create-resume-preview {
+    position: sticky;
+    top: 6rem; /* Account for navbar */
+    align-self: start;
+    max-height: calc(100vh - 14rem);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .create-resume-preview-content {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+}
+.create-resume-form-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.create-resume-form-section::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.create-resume-form-section::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d9d3e9 0%, #9dabc2 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  transition: all 0.3s ease;
+}
+
+.create-resume-form-section::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #aaa2b7 0%, #797f8d 100%);
+}
+
+/* Dark mode scrollbar */
+.dark .create-resume-form-section::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .create-resume-form-section::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #A78BFA 0%, #60A5FA 100%);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  background-clip: padding-box;
+}
+
+.dark .create-resume-form-section::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #d9cfef 0%, #607495 100%);
+}
+
+/* Preview content scrollbar styling */
+.create-resume-preview-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.create-resume-preview-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+.create-resume-preview-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e131 0%, #94a3b850 100%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.create-resume-preview-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8ac 0%, #64748B 100%);
+}
+
+.dark .create-resume-preview-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark .create-resume-preview-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #305589 0%, #64748B 100%);
+}
+
+.dark .create-resume-preview-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748B 0%, #94A3B8 100%);
 }
 
 /* Card Styles - Enhanced Glassmorphism */
@@ -498,7 +621,6 @@
   box-shadow: 0 10px 40px -10px rgba(33, 150, 243, 0.15), 0 0 20px rgba(255, 255, 255, 0.5);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
   padding: var(--spacing-xl);
   opacity: 0;
   transform: translateY(20px);
@@ -506,6 +628,15 @@
   border-top: 2px solid rgba(59, 130, 246, 0.2);
   margin-bottom: var(--spacing-xl);
   width: 100%;
+}
+
+/* Allow overflow for cards with repeatable items (experience, education, etc.) */
+.create-resume-card.experience,
+.create-resume-card.education,
+.create-resume-card.skills,
+.create-resume-card.projects,
+.create-resume-card.certifications {
+  overflow: visible;
 }
 
 .create-resume-card::before {
@@ -523,24 +654,13 @@
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-top: 2px solid rgba(59, 130, 246, 0.4);
+  border: 1px solid rgba(207, 214, 226, 0.3);
+  border-top: 2px solid rgba(209, 214, 222, 0.4);
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
 .create-resume-card.dark-mode::before {
   background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
-}
-
-/* Form Section */
-.create-resume-form-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-2xl);
 }
 
 /* Personal card with scrollable content */
@@ -564,7 +684,7 @@
   margin: calc(var(--spacing-xl) * -1) calc(var(--spacing-xl) * -1) var(--spacing-xl) calc(var(--spacing-xl) * -1);
   padding: var(--spacing-md) var(--spacing-lg);
   border-left: 3px solid var(--accent-primary);
-  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.15), 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(229, 233, 237, 0.15), 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .create-resume-card.personal .create-resume-card-header.dark-mode {
@@ -633,7 +753,7 @@
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(178, 198, 231, 0.3);
   border-radius: var(--radius-lg);
   color: white;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -643,7 +763,7 @@
   gap: var(--spacing-xs);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(195, 201, 210, 0.3);
   font-weight: 600;
 }
 
@@ -664,7 +784,7 @@
 
 .create-resume-add-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(203, 208, 215, 0.4);
 }
 
 .create-resume-add-btn:active {
@@ -677,6 +797,15 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-md);
+  width: 100%;
+}
+
+/* Ensure form grid inside items displays all fields properly */
+.create-resume-item .create-resume-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  min-width: 0;
 }
 
 .create-resume-form-grid.personal-info-grid {
@@ -744,7 +873,7 @@
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(59, 130, 246, 0.15);
+  border: 1.5px solid rgba(166, 178, 198, 0.15);
   border-radius: var(--radius-lg);
   color: var(--text-light);
   padding: var(--spacing-md) var(--spacing-lg);
@@ -777,8 +906,8 @@
 
 .create-resume-form-input.dark-mode:focus {
   border-color: var(--accent-primary);
-  background: linear-gradient(135deg, rgba(30, 41, 59, 1) 0%, rgba(15, 23, 42, 1) 100%);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25), 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgb(126, 128, 131) 0%, rgb(185, 189, 199) 100%);
+  box-shadow: 0 0 0 4px rgba(86, 91, 99, 0.25), 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .create-resume-form-textarea {
@@ -825,6 +954,16 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25), 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Additional styling for repeatable items (experience, education, etc.) */
+.create-resume-item .create-resume-form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.create-resume-item .create-resume-form-field {
+  margin-bottom: var(--spacing-lg);
+}
+
 /* Fieldset styling for grouped fields */
 fieldset {
   border: 1.5px solid rgba(59, 130, 246, 0.15);
@@ -857,7 +996,7 @@ legend {
 }
 
 legend.dark-mode {
-  color: #60A5FA;
+  color: #b1bdcb;
   background: var(--card-bg-dark);
 }
 
@@ -912,9 +1051,9 @@ legend.dark-mode {
   border-radius: var(--radius-lg);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Allow content to be fully visible */
   padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
   opacity: 0;
   transform: translateX(-20px);
   animation: slideIn 0.4s forwards;
@@ -1016,10 +1155,13 @@ legend.dark-mode {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  flex-shrink: 0;
 }
 
 .create-resume-preview-header::after {
@@ -1036,7 +1178,7 @@ legend.dark-mode {
 
 .create-resume-preview-header.dark-mode {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  border-bottom: 1px solid rgba(149, 159, 175, 0.3);
 }
 
 .create-resume-preview-header.dark-mode::after {
@@ -1108,15 +1250,18 @@ legend.dark-mode {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   border-color: var(--accent-primary);
   color: white;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5), 0 0 0 2px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(138, 141, 147, 0.5), 0 0 0 2px rgba(127, 139, 158, 0.3);
 }
 
 .create-resume-preview-content {
   padding: var(--spacing-lg);
   background: rgba(248, 250, 252, 0.02);
-  max-height: calc(100vh - 200px);
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  min-height: 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .create-resume-preview-scale {
@@ -1216,7 +1361,7 @@ legend.dark-mode {
 
 .create-resume-btn-save {
   background: linear-gradient(135deg, var(--accent-primary), #2563EB);
-  border: 1px solid rgba(59, 130, 246, 0.4);
+  border: 1px solid rgba(176, 186, 202, 0.4);
   color: white;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
