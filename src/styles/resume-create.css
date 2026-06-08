@@ -1,9 +1,9 @@
 /* Enhanced Resume Creation Page Styles */
 
-/* Background with vibrant gradient */
+/* Background - Professional, Easy on Eyes */
 .create-resume-bg {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 25%, #3d5a7f 50%, #4d6a8f 75%, #5d7a9f 100%);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
   position: relative;
@@ -59,15 +59,15 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(26, 32, 44, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(30, 58, 95, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   padding: 1rem 2rem;
   border-radius: 0 0 1.5rem 1.5rem;
   margin: 0 1.5rem 1.5rem 1.5rem;
-  background: linear-gradient(135deg, rgba(26, 32, 44, 0.9), rgba(30, 41, 59, 0.9));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.9));
 }
 
 .create-resume-nav-container {
@@ -86,7 +86,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe);
+  background: linear-gradient(90deg, #1e3a5f, #2d4a6f, #3d5a7f, #4d6a8f, #5d7a9f);
   border-radius: 2px;
   opacity: 0.7;
 }
@@ -100,12 +100,12 @@
 .create-resume-brand-icon {
   width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #1e3a5f, #2d4a6f);
   border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .create-resume-brand-text {
@@ -121,12 +121,12 @@
 }
 
 .create-resume-input {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(30, 58, 95, 0.2);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e293b;
   padding: 0.75rem 1rem;
   transition: all 0.3s ease;
   font-size: 0.9rem;
@@ -136,27 +136,27 @@
 
 .create-resume-input:focus {
   outline: none;
-  border-color: rgba(106, 97, 241, 0.7);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(106, 97, 241, 0.2);
+  border-color: rgba(37, 99, 235, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .create-resume-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(100, 116, 139, 0.6);
 }
 
 .create-resume-select {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(30, 58, 95, 0.2);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e293b;
   padding: 0.75rem 1rem;
   transition: all 0.3s ease;
   font-size: 0.9rem;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e293b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 1rem center;
   background-size: 1rem;
@@ -165,18 +165,18 @@
 
 .create-resume-select:focus {
   outline: none;
-  border-color: rgba(106, 97, 241, 0.7);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(106, 97, 241, 0.2);
+  border-color: rgba(37, 99, 235, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .create-resume-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.9);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(30, 58, 95, 0.2);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e293b;
   padding: 0.75rem 1rem;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -186,48 +186,52 @@
 }
 
 .create-resume-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
+  border-color: rgba(30, 58, 95, 0.3);
 }
 
 .create-resume-btn-save {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #1e40af;
 }
 
 .create-resume-btn-save:hover {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(37, 99, 235, 0.15);
 }
 
 .create-resume-btn-export {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.1);
   border-color: rgba(16, 185, 129, 0.3);
+  color: #047857;
 }
 
 .create-resume-btn-export:hover {
-  background: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .create-resume-btn-preview {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.1);
   border-color: rgba(139, 92, 246, 0.3);
+  color: #6d28d9;
 }
 
 .create-resume-btn-preview:hover {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.15);
 }
 
 .create-resume-status {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
 }
 
 .create-resume-status.success {
-  color: #4ade80;
+  color: #059669;
 }
 
 .create-resume-status.error {
-  color: #f87171;
+  color: #dc2626;
 }
 
 /* Main Content Layout */
@@ -240,17 +244,17 @@
 /* Sidebar Styles */
 .create-resume-sidebar {
   width: 280px;
-  background: rgba(26, 32, 44, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(30, 58, 95, 0.15);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   border-radius: 0 1.5rem 1.5rem 0;
-  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(160deg, rgba(26, 32, 44, 0.95), rgba(30, 41, 59, 0.95));
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.95));
 }
 
 .create-resume-sidebar::before {
@@ -260,7 +264,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(90deg, #1e3a5f, #2d4a6f, #3d5a7f);
   border-radius: 2px;
 }
 
@@ -271,20 +275,20 @@
 .create-resume-sidebar-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: white;
+  color: #1e293b;
   margin-bottom: 0.25rem;
 }
 
 .create-resume-sidebar-subtitle {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
 }
 
 /* Progress Bar */
 .create-resume-progress-container {
   width: 100%;
   height: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(30, 58, 95, 0.1);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 0.5rem;
@@ -292,7 +296,7 @@
 
 .create-resume-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #1e3a5f, #2d4a6f);
   border-radius: 4px;
   transition: width 0.5s ease;
 }
@@ -318,13 +322,13 @@
 }
 
 .create-resume-nav-item.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #1e3a5f, #2d4a6f);
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
 }
 
 .create-resume-nav-item:not(.active):hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(30, 58, 95, 0.08);
   transform: translateX(4px);
 }
 
@@ -339,7 +343,7 @@
 
 .create-resume-nav-label {
   font-weight: 500;
-  color: white;
+  color: #1e293b;
 }
 
 .create-resume-nav-progress {
@@ -352,21 +356,21 @@
 .create-resume-nav-progress-container {
   flex: 1;
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(30, 58, 95, 0.1);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .create-resume-nav-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #1e3a5f, #2d4a6f);
   border-radius: 2px;
   transition: width 0.5s ease;
 }
 
 .create-resume-nav-progress-text {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
   min-width: 28px;
   text-align: right;
 }
@@ -376,7 +380,7 @@
   flex: 1;
   padding: 1.5rem;
   overflow-y: auto;
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(241, 245, 249, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -395,12 +399,12 @@
 }
 
 .create-resume-card {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(30, 58, 95, 0.12);
   border-radius: 1.5rem;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -414,15 +418,15 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #64748b, #94a3b8);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .create-resume-card:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.98);
   transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
 }
 
 .create-resume-card:hover::before {
@@ -430,66 +434,66 @@
 }
 
 .create-resume-card.personal {
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.personal::before {
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card.education {
-  background: rgba(167, 139, 250, 0.1);
-  border: 1px solid rgba(167, 139, 250, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.education::before {
-  background: linear-gradient(90deg, #a78bfa, #c084fc);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card.experience {
-  background: rgba(236, 72, 153, 0.1);
-  border: 1px solid rgba(236, 72, 153, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.experience::before {
-  background: linear-gradient(90deg, #ec4899, #f472b6);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card.skills {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.skills::before {
-  background: linear-gradient(90deg, #22c55e, #4ade80);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card.projects {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.projects::before {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card.certifications {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.certifications::before {
-  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card.summary {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(209, 213, 219, 0.9);
 }
 
 .create-resume-card.summary::before {
-  background: linear-gradient(90deg, #10b981, #34d399);
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
 
 .create-resume-card-header {
@@ -502,19 +506,19 @@
 .create-resume-card-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: white;
+  color: #bbc6d6;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .create-resume-add-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(132, 140, 151, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(30, 58, 95, 0.15);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e3a5f;
   padding: 0.5rem 1rem;
   transition: all 0.3s ease;
   display: inline-flex;
@@ -523,8 +527,9 @@
 }
 
 .create-resume-add-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(30, 58, 95, 0.15);
   transform: translateY(-1px);
+  border-color: rgba(30, 58, 95, 0.25);
 }
 
 /* Form Elements */
@@ -545,7 +550,7 @@
   display: block;
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
@@ -554,18 +559,18 @@
 
 .create-resume-form-label.required::after {
   content: "*";
-  color: #f87171;
+  color: #dc2626;
   font-size: 1.1rem;
 }
 
 .create-resume-form-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(30, 58, 95, 0.2);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e293b;
   padding: 0.875rem 1.125rem;
   transition: all 0.3s ease;
   font-size: 0.95rem;
@@ -574,24 +579,24 @@
 
 .create-resume-form-input:focus {
   outline: none;
-  border-color: rgba(106, 97, 241, 0.8);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(106, 97, 241, 0.25);
+  border-color: rgba(37, 99, 235, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   transform: translateY(-1px);
 }
 
 .create-resume-form-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(100, 116, 139, 0.6);
 }
 
 .create-resume-form-textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(30, 58, 95, 0.2);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e293b;
   padding: 0.875rem 1.125rem;
   transition: all 0.3s ease;
   font-size: 0.95rem;
@@ -602,29 +607,29 @@
 
 .create-resume-form-textarea:focus {
   outline: none;
-  border-color: rgba(106, 97, 241, 0.8);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(106, 97, 241, 0.25);
+  border-color: rgba(37, 99, 235, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   transform: translateY(-1px);
 }
 
 .create-resume-form-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(100, 116, 139, 0.6);
 }
 
 .create-resume-form-select {
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(241, 245, 249, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(30, 58, 95, 0.2);
   border-radius: 0.75rem;
-  color: white;
+  color: #1e293b;
   padding: 0.875rem 1.125rem;
   transition: all 0.3s ease;
   font-size: 0.95rem;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e293b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 1rem center;
   background-size: 1rem;
@@ -633,9 +638,9 @@
 
 .create-resume-form-select:focus {
   outline: none;
-  border-color: rgba(106, 97, 241, 0.8);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(106, 97, 241, 0.25);
+  border-color: rgba(131, 148, 184, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   transform: translateY(-1px);
 }
 
@@ -660,10 +665,10 @@
 
 /* Item List Styles */
 .create-resume-item {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(241, 245, 249, 0.6);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(30, 58, 95, 0.15);
   border-radius: 1rem;
   transition: all 0.3s ease;
   position: relative;
@@ -673,18 +678,18 @@
 }
 
 .create-resume-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(241, 245, 249, 0.8);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
 .create-resume-remove-btn {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #dc2626;
   border-radius: 0.5rem;
   padding: 0.25rem;
   transition: all 0.3s ease;
@@ -692,29 +697,29 @@
 }
 
 .create-resume-remove-btn:hover {
-  background: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: rgba(220, 38, 38, 0.2);
+  color: #b91c1c;
   transform: scale(1.1);
 }
 
 /* Live Preview */
 .create-resume-preview {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(30, 58, 95, 0.15);
   border-radius: 1.25rem;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
   height: fit-content;
   position: sticky;
   top: 1.5rem;
   display: flex;
   flex-direction: column;
-  border-top: 3px solid rgba(102, 126, 234, 0.3);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 3px solid rgba(30, 58, 95, 0.3);
+  border-left: 1px solid rgba(30, 58, 95, 0.05);
+  border-right: 1px solid rgba(30, 58, 95, 0.05);
 }
 
 .create-resume-preview::before {
@@ -724,14 +729,14 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(90deg, #1e3a5f, #2d4a6f, #3d5a7f);
   opacity: 0.8;
 }
 
 .create-resume-preview-header {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.1), rgba(45, 74, 111, 0.1));
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(30, 58, 95, 0.15);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -752,7 +757,7 @@
 .create-resume-preview-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: white;
+  color: #1e293b;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -764,9 +769,9 @@
 }
 
 .create-resume-preview-actions button {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(30, 58, 95, 0.1);
+  border: 1px solid rgba(30, 58, 95, 0.2);
+  color: #1e3a5f;
   border-radius: 0.5rem;
   padding: 0.4rem 0.6rem;
   cursor: pointer;
@@ -774,14 +779,14 @@
 }
 
 .create-resume-preview-actions button:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(30, 58, 95, 0.15);
   transform: translateY(-1px);
 }
 
 .zoom-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(30, 58, 95, 0.1);
+  border: 1px solid rgba(30, 58, 95, 0.2);
+  color: #1e3a5f;
   border-radius: 0.375rem;
   padding: 0.25rem 0.5rem;
   cursor: pointer;
@@ -791,20 +796,20 @@
 }
 
 .zoom-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(30, 58, 95, 0.15);
   transform: translateY(-1px);
 }
 
 .zoom-btn.active,
 .zoom-btn:active {
-  background: rgba(99, 102, 241, 0.8);
-  border-color: rgba(99, 102, 241, 0.9);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+  background: rgba(30, 58, 95, 0.2);
+  border-color: rgba(30, 58, 95, 0.3);
+  box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.2);
 }
 
 .create-resume-preview-content {
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(241, 245, 249, 0.5);
   max-height: calc(100vh - 200px);
   overflow-y: auto;
   flex: 1;
@@ -975,18 +980,18 @@
 
 /* Validation Error Styles */
 .create-resume-form-input.error {
-  border-color: rgba(239, 68, 68, 0.8);
-  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(220, 38, 38, 0.6);
+  background: rgba(220, 38, 38, 0.05);
   animation: shake 0.5s ease-in-out;
 }
 
 .create-resume-form-input.error:focus {
-  border-color: rgba(239, 68, 68, 0.9);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  border-color: rgba(220, 38, 38, 0.8);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
 }
 
 .create-resume-error-message {
-  color: #f87171;
+  color: #dc2626;
   font-size: 0.8rem;
   margin-top: 0.25rem;
   display: flex;
@@ -1524,26 +1529,27 @@
 .create-resume-card:nth-child(6) { animation-delay: 0.6s; }
 .create-resume-card:nth-child(7) { animation-delay: 0.7s; }
 
-.create-resume-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+/* Dark mode card hover styles */
+.create-resume-bg.dark-mode .create-resume-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.create-resume-card:hover {
+.create-resume-bg.dark-mode .create-resume-card:hover {
   background: rgba(255, 255, 255, 0.12);
   transform: translateY(-6px) scale(1.01);
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
 }
 
-.create-resume-card:hover::before {
-  opacity: 1;
+.create-resume-bg.dark-mode .create-resume-card.personal,
+.create-resume-bg.dark-mode .create-resume-card.education,
+.create-resume-bg.dark-mode .create-resume-card.experience,
+.create-resume-bg.dark-mode .create-resume-card.skills,
+.create-resume-bg.dark-mode .create-resume-card.projects,
+.create-resume-bg.dark-mode .create-resume-card.certifications,
+.create-resume-bg.dark-mode .create-resume-card.summary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .create-resume-item {

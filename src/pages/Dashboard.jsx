@@ -6,7 +6,7 @@ import { Plus, FileText, Edit3, Trash2, Download, Eye, Search, Sun, Moon, Palett
 import { motion } from 'framer-motion';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 function Dashboard() {
   const { currentUser, logout } = useAuth();
@@ -16,34 +16,57 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState('classic');
+  const [error, setError] = useState(null);
 
+  // ✅ FIX: currentUser ready hone par hi fetch karo
   useEffect(() => {
-    fetchResumes();
-  }, []);
+    if (currentUser) {
+      fetchResumes();
+    } else {
+      setLoading(false);
+    }
+  }, [currentUser]);
 
   const fetchResumes = async () => {
-    if (!currentUser) return;
+    // ✅ FIX: Double-check auth before Firestore call
+    if (!currentUser || !currentUser.uid) {
+      console.warn('fetchResumes: No authenticated user found.');
+      setLoading(false);
+      return;
+    }
 
+    setError(null);
     try {
       const q = query(
         collection(db, 'users', currentUser.uid, 'resumes'),
         orderBy('updatedAt', 'desc')
       );
       const querySnapshot = await getDocs(q);
-      const resumesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+      const resumesData = querySnapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
       }));
       setResumes(resumesData);
-    } catch (error) {
-      console.error('Error fetching resumes:', error);
+    } catch (err) {
+      console.error('Error fetching resumes:', err);
+      // ✅ FIX: User-friendly error message
+      if (err.code === 'permission-denied') {
+        setError('Firestore permissions error. Please check your Firebase Security Rules.');
+      } else {
+        setError('Resumes load karne mein masla aaya. Dobara try karein.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const createNewResume = async () => {
-    if (!currentUser) return;
+    // ✅ FIX: Auth guard
+    if (!currentUser || !currentUser.uid) {
+      console.warn('createNewResume: No authenticated user.');
+      navigate('/login');
+      return;
+    }
 
     try {
       const newResume = {
@@ -67,20 +90,35 @@ function Dashboard() {
         updatedAt: new Date()
       };
 
-      const docRef = await addDoc(collection(db, 'users', currentUser.uid, 'resumes'), newResume);
+      const docRef = await addDoc(
+        collection(db, 'users', currentUser.uid, 'resumes'),
+        newResume
+      );
       navigate(`/create-resume/${docRef.id}`);
-    } catch (error) {
-      console.error('Error creating resume:', error);
+    } catch (err) {
+      console.error('Error creating resume:', err);
+      if (err.code === 'permission-denied') {
+        setError('Resume create karne ki permission nahi. Firebase Security Rules check karein.');
+      } else {
+        setError('Resume create karne mein masla aaya. Dobara try karein.');
+      }
     }
   };
 
   const deleteResume = async (id) => {
-    if (window.confirm('Are you sure you want to delete this resume?')) {
+    if (!currentUser || !currentUser.uid) return;
+
+    if (window.confirm('Kya aap yeh resume delete karna chahte hain?')) {
       try {
         await deleteDoc(doc(db, 'users', currentUser.uid, 'resumes', id));
-        setResumes(resumes.filter(resume => resume.id !== id));
-      } catch (error) {
-        console.error('Error deleting resume:', error);
+        setResumes(prev => prev.filter(resume => resume.id !== id));
+      } catch (err) {
+        console.error('Error deleting resume:', err);
+        if (err.code === 'permission-denied') {
+          setError('Delete karne ki permission nahi. Firebase Security Rules check karein.');
+        } else {
+          setError('Resume delete karne mein masla aaya.');
+        }
       }
     }
   };
@@ -89,15 +127,21 @@ function Dashboard() {
     try {
       await logout();
       navigate('/login');
-    } catch (error) {
-      console.error('Failed to log out:', error);
+    } catch (err) {
+      console.error('Failed to log out:', err);
     }
   };
 
   const filteredResumes = resumes.filter(resume =>
-    resume.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    resume.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (resume.personalInfo?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // ✅ FIX: Agar user logged in nahi toh login page par bhejo
+  if (!currentUser) {
+    navigate('/login');
+    return null;
+  }
 
   return (
     <div className={`dashboard-bg-gradient ${theme}`}>
@@ -133,9 +177,9 @@ function Dashboard() {
                 onChange={(e) => setSelectedTemplate(e.target.value)}
                 className={`input-enhanced px-4 py-2 text-white ${theme}`}
               >
-                <option value="classic" className={`dashboard-option text-white ${theme}`}>Classic</option>
-                <option value="modern" className={`dashboard-option text-white ${theme}`}>Modern</option>
-                <option value="professional" className={`dashboard-option text-white ${theme}`}>Professional</option>
+                <option value="classic">Classic</option>
+                <option value="modern">Modern</option>
+                <option value="professional">Professional</option>
               </select>
 
               <button className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300">
@@ -143,7 +187,7 @@ function Dashboard() {
               </button>
 
               <button
-                onClick={() => toggleTheme()}
+                onClick={toggleTheme}
                 className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
               >
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -164,7 +208,7 @@ function Dashboard() {
           </div>
         </div>
       </header>
-      
+
       {/* Main Content */}
       <main className="dashboard-main-container">
         <div className="d-flex justify-between items-center mb-8">
@@ -174,7 +218,7 @@ function Dashboard() {
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={createNewResume}
             className="bg-gradient-linear text-white px-6 py-3 rounded-xl font-semibold d-flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -183,6 +227,14 @@ function Dashboard() {
             <span>Create New Resume</span>
           </motion.button>
         </div>
+
+        {/* ✅ FIX: Error Banner */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm flex items-center justify-between">
+            <span>⚠️ {error}</span>
+            <button onClick={() => setError(null)} className="ml-4 text-red-300 hover:text-white font-bold">✕</button>
+          </div>
+        )}
 
         {/* Welcome Section */}
         <div className={`welcome-section ${theme}`}>
@@ -194,7 +246,7 @@ function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="d-flex-items-center-justify-center py-12">
+          <div className="d-flex items-center justify-center py-12">
             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : filteredResumes.length === 0 ? (
@@ -205,7 +257,7 @@ function Dashboard() {
             <h3 className="text-xl font-semibold text-foreground mb-2">No resumes yet</h3>
             <p className="text-muted-foreground mb-6">Get started by creating your first professional resume.</p>
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={createNewResume}
               className="bg-gradient-linear text-white px-6 py-3 rounded-xl font-semibold d-flex items-center space-x-2 mx-auto transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -223,11 +275,15 @@ function Dashboard() {
                 <div className="dashboard-stat-label">Total Resumes</div>
               </div>
               <div className={`dashboard-stat-card ${theme}`}>
-                <div className="dashboard-stat-value">{filteredResumes.reduce((acc, resume) => acc + (resume.experience?.length || 0), 0)}</div>
+                <div className="dashboard-stat-value">
+                  {filteredResumes.reduce((acc, resume) => acc + (resume.experience?.length || 0), 0)}
+                </div>
                 <div className="dashboard-stat-label">Total Experiences</div>
               </div>
               <div className={`dashboard-stat-card ${theme}`}>
-                <div className="dashboard-stat-value">{filteredResumes.reduce((acc, resume) => acc + (resume.skills?.length || 0), 0)}</div>
+                <div className="dashboard-stat-value">
+                  {filteredResumes.reduce((acc, resume) => acc + (resume.skills?.length || 0), 0)}
+                </div>
                 <div className="dashboard-stat-label">Total Skills</div>
               </div>
             </div>
@@ -243,8 +299,9 @@ function Dashboard() {
                   <h4>Template Distribution</h4>
                   {['classic', 'modern', 'professional'].map(template => {
                     const count = filteredResumes.filter(r => r.templateId === template).length;
-                    const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
-
+                    const percentage = filteredResumes.length > 0
+                      ? Math.round((count / filteredResumes.length) * 100)
+                      : 0;
                     return (
                       <div key={template} className="mb-4">
                         <div className="progress-label">
@@ -252,8 +309,8 @@ function Dashboard() {
                           <span>{percentage}%</span>
                         </div>
                         <div className="progress-bar-container">
-                          <div 
-                            className={`progress-bar ${template === 'classic' ? 'progress-bar-template' : template === 'modern' ? 'progress-bar-experience' : 'progress-bar-skills'}`} 
+                          <div
+                            className={`progress-bar ${template === 'classic' ? 'progress-bar-template' : template === 'modern' ? 'progress-bar-experience' : 'progress-bar-skills'}`}
                             style={{ width: `${percentage}%` }}
                           ></div>
                         </div>
@@ -265,35 +322,28 @@ function Dashboard() {
                 {/* Experience Level Distribution */}
                 <div className={`analytics-card ${theme}`}>
                   <h4>Experience Levels</h4>
-                  {['Entry Level', 'Mid Level', 'Senior Level', 'Executive'].map(level => {
-                    let count = 0;
-                    switch(level) {
-                      case 'Entry Level':
-                        count = filteredResumes.filter(r => (r.experience?.length || 0) <= 2).length;
-                        break;
-                      case 'Mid Level':
-                        count = filteredResumes.filter(r => (r.experience?.length || 0) > 2 && (r.experience?.length || 0) <= 5).length;
-                        break;
-                      case 'Senior Level':
-                        count = filteredResumes.filter(r => (r.experience?.length || 0) > 5 && (r.experience?.length || 0) <= 8).length;
-                        break;
-                      case 'Executive':
-                        count = filteredResumes.filter(r => (r.experience?.length || 0) > 8).length;
-                        break;
-                      default:
-                        count = 0;
-                    }
-                    const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
-
+                  {[
+                    { label: 'Entry Level', min: 0, max: 2 },
+                    { label: 'Mid Level', min: 3, max: 5 },
+                    { label: 'Senior Level', min: 6, max: 8 },
+                    { label: 'Executive', min: 9, max: Infinity }
+                  ].map(({ label, min, max }) => {
+                    const count = filteredResumes.filter(r => {
+                      const len = r.experience?.length || 0;
+                      return len >= min && len <= max;
+                    }).length;
+                    const percentage = filteredResumes.length > 0
+                      ? Math.round((count / filteredResumes.length) * 100)
+                      : 0;
                     return (
-                      <div key={level} className="mb-4">
+                      <div key={label} className="mb-4">
                         <div className="progress-label">
-                          <span>{level}</span>
+                          <span>{label}</span>
                           <span>{percentage}%</span>
                         </div>
                         <div className="progress-bar-container">
-                          <div 
-                            className={`progress-bar ${level === 'Entry Level' ? 'progress-bar-education' : level === 'Mid Level' ? 'progress-bar-template' : level === 'Senior Level' ? 'progress-bar-experience' : 'progress-bar-skills'}`} 
+                          <div
+                            className={`progress-bar ${label === 'Entry Level' ? 'progress-bar-education' : label === 'Mid Level' ? 'progress-bar-template' : label === 'Senior Level' ? 'progress-bar-experience' : 'progress-bar-skills'}`}
                             style={{ width: `${percentage}%` }}
                           ></div>
                         </div>
@@ -313,14 +363,16 @@ function Dashboard() {
                 <div className="quick-action-title">New Resume</div>
                 <div className="quick-action-desc">Create a professional resume</div>
               </div>
-              <div className={`quick-action-card ${theme}`} onClick={() => {
-                if (filteredResumes.length > 0) {
-                  navigate(`/create-resume/${filteredResumes[0].id}`);
-                } else {
-                  // If no resumes, create a new one
-                  createNewResume();
-                }
-              }}>
+              <div
+                className={`quick-action-card ${theme}`}
+                onClick={() => {
+                  if (filteredResumes.length > 0) {
+                    navigate(`/create-resume/${filteredResumes[0].id}`);
+                  } else {
+                    createNewResume();
+                  }
+                }}
+              >
                 <div className="quick-action-icon">
                   <Edit3 className="w-6 h-6 text-white" />
                 </div>
@@ -348,86 +400,13 @@ function Dashboard() {
                     <div className="activity-content">
                       <div className="activity-title">Updated "{resume.title}"</div>
                       <div className="activity-time">
-                        {resume.updatedAt?.toDate ? resume.updatedAt.toDate().toLocaleString() : 'Just now'}
+                        {resume.updatedAt?.toDate
+                          ? resume.updatedAt.toDate().toLocaleString()
+                          : 'Just now'}
                       </div>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Analytics Section */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-foreground mb-4">Resume Analytics</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Template Distribution */}
-                <div className="card-enhanced p-6">
-                  <h4 className="font-semibold text-foreground mb-4">Template Distribution</h4>
-                  <div className="space-y-3">
-                    {['classic', 'modern', 'professional'].map(template => {
-                      const count = filteredResumes.filter(r => r.templateId === template).length;
-                      const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
-                      
-                      return (
-                        <div key={template} className="mb-3">
-                          <div className="d-flex justify-between text-sm mb-1">
-                            <span className="capitalize text-muted-foreground">{template}</span>
-                            <span className="text-foreground">{percentage}% ({count})</span>
-                          </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-linear h-2 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                {/* Experience Level Distribution */}
-                <div className="card-enhanced p-6">
-                  <h4 className="font-semibold text-foreground mb-4">Experience Levels</h4>
-                  <div className="space-y-3">
-                    {['Entry Level', 'Mid Level', 'Senior Level', 'Executive'].map(level => {
-                      // Calculate experience level distribution based on number of experiences
-                      let count = 0;
-                      switch(level) {
-                        case 'Entry Level':
-                          count = filteredResumes.filter(r => (r.experience?.length || 0) <= 2).length;
-                          break;
-                        case 'Mid Level':
-                          count = filteredResumes.filter(r => (r.experience?.length || 0) > 2 && (r.experience?.length || 0) <= 5).length;
-                          break;
-                        case 'Senior Level':
-                          count = filteredResumes.filter(r => (r.experience?.length || 0) > 5 && (r.experience?.length || 0) <= 8).length;
-                          break;
-                        case 'Executive':
-                          count = filteredResumes.filter(r => (r.experience?.length || 0) > 8).length;
-                          break;
-                        default:
-                          count = 0;
-                      }
-                      const percentage = filteredResumes.length > 0 ? Math.round((count / filteredResumes.length) * 100) : 0;
-                      
-                      return (
-                        <div key={level} className="mb-3">
-                          <div className="d-flex justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">{level}</span>
-                            <span className="text-foreground">{percentage}% ({count})</span>
-                          </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-linear h-2 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -447,14 +426,25 @@ function Dashboard() {
                         <FileText className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className={`font-semibold text-foreground truncate max-w-[160px] ${theme}`}>{resume.title}</h3>
+                        <h3 className={`font-semibold text-foreground truncate max-w-[160px] ${theme}`}>
+                          {resume.title}
+                        </h3>
                         <p className={`text-sm text-muted-foreground ${theme}`}>
-                          {resume.updatedAt?.toDate ? resume.updatedAt.toDate().toLocaleDateString() : 'Just now'}
+                          {resume.updatedAt?.toDate
+                            ? resume.updatedAt.toDate().toLocaleDateString()
+                            : 'Just now'}
                         </p>
                       </div>
                     </div>
-
-                    <span className={`px-3 py-1 text-xs rounded-full badge ${resume.templateId === 'modern' ? 'badge-modern' : resume.templateId === 'professional' ? 'badge-professional' : 'badge-secondary'}`}>
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full badge ${
+                        resume.templateId === 'modern'
+                          ? 'badge-modern'
+                          : resume.templateId === 'professional'
+                          ? 'badge-professional'
+                          : 'badge-secondary'
+                      }`}
+                    >
                       {resume.templateId}
                     </span>
                   </div>
@@ -503,6 +493,7 @@ function Dashboard() {
           </>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

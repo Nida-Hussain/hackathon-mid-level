@@ -26,6 +26,7 @@ import { db } from '../firebase';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 function ResumePreview() {
   const { id } = useParams();
@@ -626,6 +627,7 @@ function ResumePreview() {
           <ResumeTemplate />
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

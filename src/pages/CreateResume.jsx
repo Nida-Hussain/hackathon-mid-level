@@ -3,1510 +3,970 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
-  User,
-  GraduationCap,
-  Briefcase,
-  Code,
-  Award,
-  FileText,
-  Download,
-  Eye,
-  Save,
-  ChevronDown,
-  ChevronUp,
-  Plus,
-  X,
-  Upload,
-  Layout,
-  Palette,
-  Type,
-  Building,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Calendar,
-  ExternalLink,
-  Sun,
-  Moon
+  User, GraduationCap, Briefcase, Code, Award, FileText,
+  Download, Eye, Save, Plus, X, MapPin, Phone, Mail,
+  ExternalLink, Sun, Moon, Star, AlertCircle, ChevronDown,
+  Trash2, Pencil, Check, Layout
 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import Navbar from '../components/Navbar';
 
-// Import the custom CSS for the resume creation page
-import '../styles/resume-create-enhanced.css';
+const sectionMeta = {
+  personal: { icon: User, label: 'Personal Info', gradient: 'from-violet-500 to-purple-600' },
+  summary: { icon: FileText, label: 'Summary', gradient: 'from-blue-500 to-cyan-500' },
+  education: { icon: GraduationCap, label: 'Education', gradient: 'from-emerald-500 to-teal-500' },
+  experience: { icon: Briefcase, label: 'Experience', gradient: 'from-amber-500 to-orange-500' },
+  skills: { icon: Code, label: 'Skills', gradient: 'from-rose-500 to-pink-500' },
+  projects: { icon: Award, label: 'Projects', gradient: 'from-indigo-500 to-blue-500' },
+  certifications: { icon: Star, label: 'Certifications', gradient: 'from-cyan-500 to-sky-500' },
+};
+
+function FormField({ c, label, error, children, required, hint }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      {label && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: c.label }}>
+          {label}
+          {required && <span style={{ color: c.danger, fontSize: 15, lineHeight: 1 }}>*</span>}
+          {hint && <span style={{ color: c.textMuted, fontSize: 11, fontWeight: 400, marginLeft: 'auto' }}>{hint}</span>}
+        </label>
+      )}
+      {children}
+      {error && (
+        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+          style={{ color: c.danger, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, margin: 0 }}>
+          <AlertCircle style={{ width: 12, height: 12, flexShrink: 0 }} />{error}
+        </motion.p>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ c, icon: Icon, title, desc, action, onClick, color }) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '40px 20px' }}>
+      <div style={{ width: 56, height: 56, borderRadius: 14, background: `linear-gradient(135deg, ${color || '#6366f1'}, ${color || '#7c3aed'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', opacity: 0.8 }}>
+        <Icon style={{ width: 28, height: 28, color: '#fff' }} />
+      </div>
+      <h4 style={{ color: c.text, fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{title}</h4>
+      <p style={{ color: c.textMuted, fontSize: 13, marginBottom: 18, maxWidth: 280, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.4 }}>{desc}</p>
+      <button onClick={onClick}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${color || '#6366f1'}, ${color || '#7c3aed'})`, color: '#fff', boxShadow: `0 4px 14px rgba(99,102,241,0.25)`, transition: 'all 0.2s' }}>
+        <Plus style={{ width: 14, height: 14 }} /> {action}
+      </button>
+    </motion.div>
+  );
+}
+
+function SectionCard({ c, isDark, sectionMeta, sectionId, isOpen, onToggle, completionPct, children }) {
+  const meta = sectionMeta[sectionId];
+  const Icon = meta.icon;
+  const isComplete = completionPct === 100;
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+      style={{
+        background: c.card, borderRadius: 14, overflow: 'hidden',
+        border: `1px solid ${isOpen ? c.borderActive : c.border}`,
+        transition: 'border-color 0.3s, box-shadow 0.3s',
+        boxShadow: isOpen ? `0 4px 24px rgba(99,102,241,0.08)` : 'none',
+      }}>
+      <button onClick={onToggle}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 18px', border: 'none', background: 'transparent', color: c.text,
+          cursor: 'pointer', transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = c.cardHover}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, ${meta.gradient.replace('from-', '').replace('to-', '').split(' ').join(', ').replace('violet', '#8b5cf6').replace('purple', '#a855f7').replace('blue', '#3b82f6').replace('cyan', '#06b6d4').replace('emerald', '#10b981').replace('teal', '#14b8a6').replace('amber', '#f59e0b').replace('orange', '#f97316').replace('rose', '#f43f5e').replace('pink', '#ec4899').replace('indigo', '#6366f1').replace('sky', '#0ea5e9')})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon style={{ width: 18, height: 18, color: '#fff' }} />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{meta.label}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+              <div style={{ width: 64, height: 5, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(99,102,241,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 3, background: isComplete ? c.success : (completionPct > 0 ? c.accent : isDark ? 'rgba(255,255,255,0.15)' : 'rgba(99,102,241,0.15)'), width: `${completionPct}%`, transition: 'width 0.5s, background 0.3s' }} />
+              </div>
+              <span style={{ fontSize: 10, color: c.textMuted, fontWeight: 500 }}>{isComplete ? 'Done' : `${completionPct}%`}</span>
+            </div>
+          </div>
+        </div>
+        <ChevronDown style={{ width: 16, height: 16, color: c.textMuted, transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s', flexShrink: 0 }} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }}>
+            <div style={{ padding: '0 18px 20px', borderTop: `1px solid ${c.border}` }}>
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function SectionHeader({ icon: Icon, title, color = '#6366f1' }) {
+  return (
+    <div style={{ marginBottom: 12, borderBottom: `2px solid ${color}30`, paddingBottom: 6 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
+        <div style={{ width: 22, height: 22, borderRadius: 6, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon style={{ width: 12, height: 12, color: '#fff' }} />
+        </div>
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function LivePreview({ resumeData }) {
+  const p = resumeData.personalInfo || {};
+  const font = 'Inter, system-ui, -apple-system, sans-serif';
+
+  return (
+    <div id="resume-preview"
+      style={{
+        background: '#ffffff',
+        width: 595, margin: '0 auto', minHeight: 842,
+        color: '#1e293b', fontFamily: font,
+        fontSize: 13, lineHeight: 1.5,
+        display: 'flex', flexDirection: 'column',
+      }}>
+      {/* Header Section */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+        padding: '32px 32px 24px',
+        color: '#f8fafc',
+      }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 2px', letterSpacing: '-0.02em' }}>
+          {p.fullName || 'Your Name'}
+        </h1>
+        {p.jobTitle && (
+          <p style={{ fontSize: 14, fontWeight: 500, color: '#a5b4fc', margin: '0 0 14px' }}>{p.jobTitle}</p>
+        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: 11, color: '#cbd5e1' }}>
+          {p.email && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Mail style={{ width: 11, height: 11 }} /> {p.email}</span>}
+          {p.phone && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone style={{ width: 11, height: 11 }} /> {p.phone}</span>}
+          {p.address && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin style={{ width: 11, height: 11 }} /> {p.address}</span>}
+          {p.linkedin && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ExternalLink style={{ width: 11, height: 11 }} /> {p.linkedin}</span>}
+          {p.github && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ExternalLink style={{ width: 11, height: 11 }} /> {p.github}</span>}
+        </div>
+      </div>
+
+      <div style={{ padding: '24px 32px', flex: 1 }}>
+        {/* Summary */}
+        {p.summary && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionHeader icon={FileText} title="Professional Summary" color="#6366f1" />
+            <p style={{ color: '#475569', lineHeight: 1.6, margin: 0, fontSize: 12 }}>{p.summary}</p>
+          </div>
+        )}
+
+        {/* Experience */}
+        {resumeData.experience?.filter(e => e.company || e.position).length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionHeader icon={Briefcase} title="Experience" color="#f59e0b" />
+            {resumeData.experience.filter(e => e.company || e.position).map((exp, i) => (
+              <div key={i} style={{ marginBottom: i < resumeData.experience.length - 1 ? 12 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 style={{ fontWeight: 700, color: '#1e293b', fontSize: 13, margin: 0 }}>{exp.position || 'Position'}</h3>
+                    <p style={{ fontSize: 11, color: '#6366f1', fontWeight: 600, margin: '1px 0 0' }}>
+                      {exp.company}{exp.location ? ` | ${exp.location}` : ''}
+                    </p>
+                  </div>
+                  {(exp.startDate || exp.endDate) && (
+                    <span style={{ fontSize: 10, color: '#64748b', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {exp.startDate} - {exp.endDate || 'Present'}
+                    </span>
+                  )}
+                </div>
+                {exp.description && (
+                  <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.5, marginTop: 4 }}>
+                    {exp.description.split('\n').map((line, li) => (
+                      <div key={li} style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
+                        <span style={{ color: '#6366f1', fontSize: 10, marginTop: 3 }}>•</span>
+                        <span>{line}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Education */}
+        {resumeData.education?.filter(e => e.institution || e.degree).length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionHeader icon={GraduationCap} title="Education" color="#10b981" />
+            {resumeData.education.filter(e => e.institution || e.degree).map((edu, i) => (
+              <div key={i} style={{ marginBottom: i < resumeData.education.length - 1 ? 10 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 style={{ fontWeight: 700, color: '#1e293b', fontSize: 13, margin: 0 }}>{edu.degree || 'Degree'}</h3>
+                    <p style={{ fontSize: 11, color: '#6366f1', fontWeight: 500, margin: '1px 0 0' }}>
+                      {edu.institution}{edu.fieldOfStudy ? ` | ${edu.fieldOfStudy}` : ''}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    {(edu.startDate || edu.endDate) && (
+                      <span style={{ fontSize: 10, color: '#64748b' }}>{edu.startDate} - {edu.endDate || 'Present'}</span>
+                    )}
+                    {edu.grade && <p style={{ fontSize: 10, color: '#10b981', fontWeight: 600, margin: '1px 0 0' }}>GPA: {edu.grade}</p>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Skills */}
+        {resumeData.skills?.filter(s => s.name).length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionHeader icon={Code} title="Skills" color="#f43f5e" />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {resumeData.skills.filter(s => s.name).map((skill, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{
+                    background: '#f1f5f9', color: '#334155', padding: '4px 10px',
+                    borderRadius: 6, fontSize: 11, fontWeight: 500, border: '1px solid #e2e8f0',
+                  }}>
+                    {skill.name}
+                    {skill.level !== 'Intermediate' && (
+                      <span style={{ color: '#94a3b8', fontSize: 10, marginLeft: 4 }}>({skill.level})</span>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        {resumeData.projects?.filter(p => p.name).length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionHeader icon={Award} title="Projects" color="#8b5cf6" />
+            {resumeData.projects.filter(p => p.name).map((proj, i) => (
+              <div key={i} style={{ marginBottom: i < resumeData.projects.length - 1 ? 10 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontWeight: 700, color: '#1e293b', fontSize: 13, margin: 0 }}>{proj.name}</h3>
+                  {proj.link && (
+                    <a href={proj.link} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 10, color: '#6366f1', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <ExternalLink style={{ width: 10, height: 10 }} /> Link
+                    </a>
+                  )}
+                </div>
+                {proj.description && (
+                  <p style={{ fontSize: 12, color: '#475569', margin: '3px 0 0', lineHeight: 1.5 }}>{proj.description}</p>
+                )}
+                {proj.technologies && (
+                  <p style={{ fontSize: 10, color: '#64748b', margin: '2px 0 0' }}>
+                    <span style={{ fontWeight: 600 }}>Tech:</span> {proj.technologies}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Certifications */}
+        {resumeData.certifications?.filter(c => c.name).length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionHeader icon={Star} title="Certifications" color="#06b6d4" />
+            {resumeData.certifications.filter(c => c.name).map((cert, i) => (
+              <div key={i} style={{
+                marginBottom: i < resumeData.certifications.length - 1 ? 8 : 0,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <div>
+                  <p style={{ fontWeight: 600, color: '#1e293b', fontSize: 12, margin: 0 }}>{cert.name}</p>
+                  <p style={{ fontSize: 11, color: '#6366f1', margin: '1px 0 0' }}>
+                    {cert.issuer}{cert.credentialId ? ` | ${cert.credentialId}` : ''}
+                  </p>
+                </div>
+                {cert.date && <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 }}>{cert.date}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function getPreviewTransform(previewScale) {
+  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+    return previewScale === '75' ? 'scale(0.45)' : previewScale === '90' ? 'scale(0.55)' : previewScale === '100' ? 'scale(0.6)' : 'scale(0.65)';
+  }
+  return previewScale === '75' ? 'scale(0.6)' : previewScale === '90' ? 'scale(0.8)' : previewScale === '100' ? 'scale(0.85)' : 'scale(0.95)';
+}
 
 function CreateResume() {
   const { id } = useParams();
   const { currentUser, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  
-  console.log('CreateResume - id:', id);
-  console.log('CreateResume - currentUser:', currentUser?.email);
-  console.log('CreateResume - authLoading:', authLoading);
-  
+  const isDark = theme === 'dark';
+
   const [resumeData, setResumeData] = useState({
     title: 'Untitled Resume',
     templateId: 'modern',
-    personalInfo: {
-      fullName: '',
-      email: '',
-      phone: '',
-      address: '',
-      linkedin: '',
-      github: '',
-      website: '',
-      summary: ''
-    },
+    personalInfo: { fullName: '', email: '', phone: '', address: '', linkedin: '', github: '', website: '', summary: '', jobTitle: '' },
     education: [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
     experience: [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
     skills: [{ name: '', level: 'Intermediate' }],
     projects: [{ name: '', description: '', technologies: '', link: '' }],
-    certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
+    certifications: [{ name: '', issuer: '', date: '', credentialId: '' }],
   });
   const [validationErrors, setValidationErrors] = useState({});
   const [activeSection, setActiveSection] = useState('personal');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewScale, setPreviewScale] = useState('100');
-  const [loadingResume, setLoadingResume] = useState(false);
+  const [loadingResume, setLoadingResume] = useState(id ? true : false);
+  const [mobileFormOpen, setMobileFormOpen] = useState(true);
 
-  // Load resume data when id or currentUser changes
+  const loadResume = async () => {
+    if (!currentUser || !id) { setLoadingResume(false); return; }
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid, 'resumes', id));
+      if (snap.exists()) {
+        const d = snap.data();
+        setResumeData({
+          title: d.title || 'Untitled Resume',
+          templateId: d.templateId || 'modern',
+          personalInfo: { fullName: '', email: '', phone: '', address: '', linkedin: '', github: '', website: '', summary: '', jobTitle: '', ...(d.personalInfo || {}) },
+          education: d.education?.length ? d.education : [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
+          experience: d.experience?.length ? d.experience : [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
+          skills: d.skills?.length ? d.skills : [{ name: '', level: 'Intermediate' }],
+          projects: d.projects?.length ? d.projects : [{ name: '', description: '', technologies: '', link: '' }],
+          certifications: d.certifications?.length ? d.certifications : [{ name: '', issuer: '', date: '', credentialId: '' }],
+        });
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoadingResume(false); }
+  };
+
   useEffect(() => {
-    if (id && currentUser) {
-      setLoadingResume(true);
-      loadResume();
-    }
+    if (id && currentUser) loadResume();
+    else setLoadingResume(false);
   }, [id, currentUser]);
 
-  // Show loading while loading auth/resume
-  if (authLoading || (id && loadingResume)) {
-    console.log('Showing loading screen...');
+  const c = isDark ? {
+    bg: '#0b0d1a',
+    surface: '#131627',
+    card: '#1a1d31',
+    cardHover: '#1f2340',
+    border: 'rgba(99,102,241,0.12)',
+    borderActive: 'rgba(99,102,241,0.35)',
+    input: '#101225',
+    inputBorder: 'rgba(148,163,184,0.15)',
+    text: '#f1f5f9',
+    textMuted: 'rgba(148,163,184,0.6)',
+    label: '#a5b4fc',
+    headerBg: 'rgba(11,13,26,0.92)',
+    accent: '#818cf8',
+    sidebarBg: 'rgba(19,22,39,0.85)',
+    itemBg: 'rgba(26,29,49,0.6)',
+    success: '#34d399',
+    danger: '#f87171',
+  } : {
+    bg: '#f4f6fc',
+    surface: '#ffffff',
+    card: '#ffffff',
+    cardHover: '#f8f9ff',
+    border: 'rgba(99,102,241,0.12)',
+    borderActive: 'rgba(99,102,241,0.35)',
+    input: '#f8faff',
+    inputBorder: 'rgba(99,102,241,0.18)',
+    text: '#0f172a',
+    textMuted: 'rgba(71,85,105,0.5)',
+    label: '#4f46e5',
+    headerBg: 'rgba(255,255,255,0.92)',
+    accent: '#6366f1',
+    sidebarBg: 'rgba(255,255,255,0.85)',
+    itemBg: 'rgba(99,102,241,0.04)',
+    success: '#059669',
+    danger: '#dc2626',
+  };
+
+  if (authLoading || loadingResume) {
     return (
-      <div className="create-resume-bg d-flex-items-center-justify-center" style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-white mt-4">{id ? 'Loading your resume...' : 'Loading...'}</p>
+      <div style={{ minHeight: '100vh', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid rgba(99,102,241,0.15)', borderTopColor: c.accent, animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <p style={{ color: c.textMuted, marginTop: 20, fontSize: 15 }}>{id ? 'Loading resume...' : 'Loading...'}</p>
         </div>
       </div>
     );
   }
 
   if (!currentUser) {
-    console.log('No user - redirecting to login');
     return (
-      <div className="create-resume-bg d-flex-items-center-justify-center" style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Access Denied</h2>
-          <p className="text-white mb-4">You must be logged in to create a resume.</p>
-          <button
-            onClick={() => navigate('/login')}
-            className="bg-gradient-linear text-white px-6 py-3 rounded-xl font-semibold d-flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl"
-          >
-            <span>Login</span>
+      <div style={{ minHeight: '100vh', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ textAlign: 'center', maxWidth: 380 }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: `rgba(99,102,241,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <AlertCircle style={{ width: 36, height: 36, color: c.accent }} />
+          </div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: c.text, marginBottom: 8 }}>Access Denied</h2>
+          <p style={{ color: c.textMuted, fontSize: 15, marginBottom: 28, lineHeight: 1.5 }}>You need to sign in to create and edit resumes.</p>
+          <button onClick={() => navigate('/login')}
+            style={{ background: `linear-gradient(135deg, ${c.accent}, #7c3aed)`, color: '#fff', border: 'none', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: `0 8px 24px rgba(99,102,241,0.25)`, transition: 'all 0.2s' }}>
+            Sign In
           </button>
         </div>
       </div>
     );
   }
-  
-  console.log('Rendering CreateResume component...');
 
-  // Calculate completion percentage for each section
-  const calculateCompletion = (section) => {
-    // Ensure resumeData and its properties exist before accessing
+  const calcCompletion = (section) => {
     if (!resumeData) return 0;
-
     if (section === 'personal') {
-      const personalInfo = resumeData.personalInfo || {};
-      const { fullName, email } = personalInfo;
-      const requiredFields = [fullName, email];
-      const optionalFields = [personalInfo.phone, personalInfo.address, personalInfo.jobTitle,
-                             personalInfo.linkedin, personalInfo.github, personalInfo.website];
-
-      const filledRequired = requiredFields.filter(field => field && field.trim() !== '');
-      const filledOptional = optionalFields.filter(field => field && field.trim() !== '');
-
-      // Calculate completion: 50% for required fields, 50% for optional fields
-      const requiredCompletion = (filledRequired.length / requiredFields.length) * 50;
-      const optionalCompletion = (filledOptional.length / optionalFields.length) * 50;
-
-      return Math.round(requiredCompletion + optionalCompletion);
+      const p = resumeData.personalInfo || {};
+      const req = [p.fullName, p.email].filter(Boolean).length;
+      const opt = [p.phone, p.address, p.jobTitle, p.linkedin, p.github, p.website].filter(Boolean).length;
+      return Math.round((req / 2) * 50 + (opt / 6) * 50);
     }
-
-    if (section === 'education') {
-      const education = resumeData.education || [];
-      const filledEducations = education.filter(edu =>
-        edu.institution || edu.degree || edu.fieldOfStudy
-      );
-      return filledEducations.length > 0 ? 100 : 0;
-    }
-
-    if (section === 'experience') {
-      const experience = resumeData.experience || [];
-      const filledExperiences = experience.filter(exp =>
-        exp.company || exp.position || exp.description
-      );
-      return filledExperiences.length > 0 ? 100 : 0;
-    }
-
-    if (section === 'skills') {
-      const skills = resumeData.skills || [];
-      const filledSkills = skills.filter(skill =>
-        skill.name
-      );
-      return filledSkills.length > 0 ? 100 : 0;
-    }
-
-    if (section === 'projects') {
-      const projects = resumeData.projects || [];
-      const filledProjects = projects.filter(project =>
-        project.name || project.description
-      );
-      return filledProjects.length > 0 ? 100 : 0;
-    }
-
-    if (section === 'certifications') {
-      const certifications = resumeData.certifications || [];
-      const filledCerts = certifications.filter(cert =>
-        cert.name || cert.issuer
-      );
-      return filledCerts.length > 0 ? 100 : 0;
-    }
-
-    if (section === 'summary') {
-      const personalInfo = resumeData.personalInfo || {};
-      const hasSummary = personalInfo.summary ? 1 : 0;
-      const totalFields = 1;
-      const filledFields = hasSummary;
-      return Math.round((filledFields / totalFields) * 100);
-    }
-
+    if (section === 'education') return (resumeData.education || []).filter(e => e.institution || e.degree).length > 0 ? 100 : 0;
+    if (section === 'experience') return (resumeData.experience || []).filter(e => e.company || e.position).length > 0 ? 100 : 0;
+    if (section === 'skills') return (resumeData.skills || []).filter(s => s.name).length > 0 ? 100 : 0;
+    if (section === 'projects') return (resumeData.projects || []).filter(p => p.name).length > 0 ? 100 : 0;
+    if (section === 'certifications') return (resumeData.certifications || []).filter(c => c.name).length > 0 ? 100 : 0;
+    if (section === 'summary') return (resumeData.personalInfo?.summary || '').trim() ? 100 : 0;
     return 0;
   };
 
-  // Overall completion percentage
-  const overallCompletion = () => {
-    if (!resumeData) return 0;
-    const sections = ['personal', 'education', 'experience', 'skills', 'projects', 'certifications', 'summary'];
-    const completedSections = sections.filter(section => calculateCompletion(section) > 0);
-    return Math.round((completedSections.length / sections.length) * 100);
-  };
-
-  const loadResume = async () => {
-    if (!currentUser) {
-      console.log('No current user, cannot load resume');
-      setLoadingResume(false);
-      return;
-    }
-
-    if (!id) {
-      console.log('No resume ID provided');
-      setLoadingResume(false);
-      return;
-    }
-
-    try {
-      console.log(`Attempting to load resume with ID: ${id} for user: ${currentUser.uid}`);
-      const docRef = doc(db, 'users', currentUser.uid, 'resumes', id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        console.log('Resume data loaded:', docSnap.data());
-        const data = docSnap.data();
-        // Ensure all required fields exist
-        setResumeData({
-          title: data.title || 'Untitled Resume',
-          templateId: data.templateId || 'modern',
-          personalInfo: data.personalInfo || {
-            fullName: '',
-            email: '',
-            phone: '',
-            address: '',
-            linkedin: '',
-            github: '',
-            website: '',
-            summary: ''
-          },
-          education: data.education || [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
-          experience: data.experience || [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
-          skills: data.skills || [{ name: '', level: 'Intermediate' }],
-          projects: data.projects || [{ name: '', description: '', technologies: '', link: '' }],
-          certifications: data.certifications || [{ name: '', issuer: '', date: '', credentialId: '' }]
-        });
-      } else {
-        console.log('Resume document does not exist');
-        // Initialize with empty data if document doesn't exist
-        setResumeData({
-          title: 'Untitled Resume',
-          templateId: 'modern',
-          personalInfo: {
-            fullName: '',
-            email: '',
-            phone: '',
-            address: '',
-            linkedin: '',
-            github: '',
-            website: '',
-            summary: ''
-          },
-          education: [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
-          experience: [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
-          skills: [{ name: '', level: 'Intermediate' }],
-          projects: [{ name: '', description: '', technologies: '', link: '' }],
-          certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
-        });
-      }
-    } catch (error) {
-      console.error('Error loading resume:', error);
-      console.error('Error details:', error.message, error.code);
-      // Set default data in case of error
-      setResumeData({
-        title: 'Untitled Resume',
-        templateId: 'modern',
-        personalInfo: {
-          fullName: '',
-          email: '',
-          phone: '',
-          address: '',
-          linkedin: '',
-          github: '',
-          website: '',
-          summary: ''
-        },
-        education: [{ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' }],
-        experience: [{ company: '', position: '', startDate: '', endDate: '', description: '', location: '' }],
-        skills: [{ name: '', level: 'Intermediate' }],
-        projects: [{ name: '', description: '', technologies: '', link: '' }],
-        certifications: [{ name: '', issuer: '', date: '', credentialId: '' }]
-      });
-    } finally {
-      setLoadingResume(false);
-    }
+  const overallPct = () => {
+    const all = ['personal', 'summary', 'education', 'experience', 'skills', 'projects', 'certifications'];
+    return Math.round((all.filter(s => calcCompletion(s) > 0).length / all.length) * 100);
   };
 
   const saveResume = async () => {
     if (!currentUser || !id) return;
-
     try {
-      setIsSaving(true);
-      setSaveStatus('Saving...');
-
-      const docRef = doc(db, 'users', currentUser.uid, 'resumes', id);
-      await updateDoc(docRef, {
-        ...resumeData,
-        updatedAt: serverTimestamp()
-      });
-
+      setIsSaving(true); setSaveStatus('Saving...');
+      await updateDoc(doc(db, 'users', currentUser.uid, 'resumes', id), { ...resumeData, updatedAt: serverTimestamp() });
       setSaveStatus('Saved!');
       setTimeout(() => setSaveStatus(''), 2000);
-    } catch (error) {
-      console.error('Error saving resume:', error);
-      setSaveStatus('Error saving');
+    } catch (e) {
+      console.error(e); setSaveStatus('Error saving');
       setTimeout(() => setSaveStatus(''), 2000);
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
   const validateField = (section, field, value) => {
-    const errors = { ...validationErrors };
-
-    // Clear previous error for this field
-    delete errors[`${section}.${field}`];
-
-    // Validation rules
+    const errs = { ...validationErrors };
+    delete errs[`${section}.${field}`];
     if (section === 'personalInfo') {
-      if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
-        errors[`${section}.${field}`] = 'Please enter a valid email address';
-      }
-      if (field === 'phone' && value && !/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-\(\)]/g, ''))) {
-        errors[`${section}.${field}`] = 'Please enter a valid phone number';
-      }
-      if (field === 'linkedin' && value && !value.startsWith('https://') && !value.startsWith('http://')) {
-        errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
-      }
-      if (field === 'github' && value && !value.startsWith('https://') && !value.startsWith('http://')) {
-        errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
-      }
-      if (field === 'website' && value && !value.startsWith('https://') && !value.startsWith('http://')) {
-        errors[`${section}.${field}`] = 'Please enter a valid URL starting with https:// or http://';
-      }
+      if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) errs[`${section}.${field}`] = 'Invalid email';
+      if (field === 'phone' && value && !/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-\(\)]/g, ''))) errs[`${section}.${field}`] = 'Invalid phone';
     }
-
-    setValidationErrors(errors);
+    setValidationErrors(errs);
   };
 
-  const handleInputChange = (section, field, value, index = null) => {
-    // Validate the field
+  const handleChange = (section, field, value, index) => {
     validateField(section, field, value);
-    
-    if (index !== null) {
-      const newArray = [...resumeData[section]];
-      newArray[index] = { ...newArray[index], [field]: value };
-      setResumeData(prev => ({ ...prev, [section]: newArray }));
+    if (index !== undefined && index !== null) {
+      setResumeData(prev => {
+        const arr = [...prev[section]];
+        arr[index] = { ...arr[index], [field]: value };
+        return { ...prev, [section]: arr };
+      });
+    } else if (section === 'title' || section === 'templateId') {
+      setResumeData(prev => ({ ...prev, [section]: value }));
     } else {
-      setResumeData(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section],
-          [field]: value
-        }
-      }));
+      setResumeData(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
     }
   };
 
-  const getValidationError = (section, field) => {
-    if (!validationErrors) return null;
-    return validationErrors[`${section}.${field}`];
+  const getErr = (section, field) => validationErrors ? validationErrors[`${section}.${field}`] : null;
+
+  const addItem = (section) => {
+    const tpl = {
+      education: { institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '', grade: '' },
+      experience: { company: '', position: '', startDate: '', endDate: '', description: '', location: '' },
+      skills: { name: '', level: 'Intermediate' },
+      projects: { name: '', description: '', technologies: '', link: '' },
+      certifications: { name: '', issuer: '', date: '', credentialId: '' },
+    };
+    if (tpl[section]) setResumeData(prev => ({ ...prev, [section]: [...prev[section], tpl[section]] }));
   };
 
-  const addNewItem = (section) => {
-    const newItem = {};
-    switch (section) {
-      case 'education':
-        newItem.institution = '';
-        newItem.degree = '';
-        newItem.fieldOfStudy = '';
-        newItem.startDate = '';
-        newItem.endDate = '';
-        newItem.grade = '';
-        break;
-      case 'experience':
-        newItem.company = '';
-        newItem.position = '';
-        newItem.startDate = '';
-        newItem.endDate = '';
-        newItem.description = '';
-        newItem.location = '';
-        break;
-      case 'skills':
-        newItem.name = '';
-        newItem.level = 'Intermediate';
-        break;
-      case 'projects':
-        newItem.name = '';
-        newItem.description = '';
-        newItem.technologies = '';
-        newItem.link = '';
-        break;
-      case 'certifications':
-        newItem.name = '';
-        newItem.issuer = '';
-        newItem.date = '';
-        newItem.credentialId = '';
-        break;
-      default:
-        return;
-    }
+  const removeItem = (section, index) => setResumeData(prev => ({ ...prev, [section]: prev[section].filter((_, i) => i !== index) }));
 
-    setResumeData(prev => ({
-      ...prev,
-      [section]: [...prev[section], newItem]
-    }));
-  };
-
-  const removeItem = (section, index) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: prev[section].filter((_, i) => i !== index)
-    }));
-  };
-
-  const exportToPDF = async () => {
-    const input = document.getElementById('resume-preview');
-    if (!input) return;
-
+  const exportPDF = async () => {
+    const orig = document.getElementById('resume-preview');
+    if (!orig) return;
     try {
-      const canvas = await html2canvas(input);
+      const clone = orig.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.transform = 'none';
+      clone.style.width = '595px';
+      clone.style.borderRadius = '0';
+      clone.style.boxShadow = 'none';
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 595,
+        height: clone.scrollHeight,
+        logging: false,
+      });
+
+      document.body.removeChild(clone);
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const pdfW = 210;
+      const pdfH = 297;
+      const imgH = (canvas.height * pdfW) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      let heightLeft = imgH;
+      let pos = 0;
+      pdf.addImage(imgData, 'PNG', 0, pos, pdfW, imgH);
+      heightLeft -= pdfH;
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
+      while (heightLeft > 0) {
+        pos = heightLeft - imgH;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, 'PNG', 0, pos, pdfW, imgH);
+        heightLeft -= pdfH;
       }
 
       pdf.save(`${resumeData.title || 'resume'}.pdf`);
-    } catch (error) {
-      console.error('Error exporting to PDF:', error);
-    }
+    } catch (e) { console.error(e); }
   };
 
-  const sections = [
-    { id: 'personal', label: 'Personal Info', icon: User },
-    { id: 'summary', label: 'Summary', icon: FileText },
-    { id: 'education', label: 'Education', icon: GraduationCap },
-    { id: 'experience', label: 'Experience', icon: Briefcase },
-    { id: 'skills', label: 'Skills', icon: Code },
-    { id: 'projects', label: 'Projects', icon: Award },
-    { id: 'certifications', label: 'Certifications', icon: Award }
-  ];
+  const sections = Object.entries(sectionMeta).map(([id, meta]) => ({ id, ...meta }));
 
-  const LivePreview = () => (
-    <div id="resume-preview" className="create-resume-preview-paper-responsive">
-      {/* Header */}
-      <div className="create-resume-preview-header-section">
-        <h1 className="create-resume-preview-name">{resumeData.personalInfo.fullName || 'Your Name'}</h1>
-        {resumeData.personalInfo.jobTitle && (
-          <p className="create-resume-preview-title-role">{resumeData.personalInfo.jobTitle}</p>
-        )}
-        <div className="create-resume-preview-contact">
-          {resumeData.personalInfo.email && <span><Mail className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.email}</span>}
-          {resumeData.personalInfo.phone && <span><Phone className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.phone}</span>}
-          {resumeData.personalInfo.address && <span><MapPin className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.address}</span>}
-          {resumeData.personalInfo.linkedin && <span><ExternalLink className="inline w-4 h-4 mr-1" /> {resumeData.personalInfo.linkedin}</span>}
-        </div>
-      </div>
-
-      {/* Summary */}
-      {resumeData.personalInfo.summary && (
-        <div className="create-resume-preview-section">
-          <h2 className="create-resume-preview-section-title">Summary</h2>
-          <p className="create-resume-preview-item-description">{resumeData.personalInfo.summary}</p>
-        </div>
-      )}
-
-      {/* Experience */}
-      {resumeData.experience.filter(exp => exp.company || exp.position || exp.description).length > 0 && (
-        <div className="create-resume-preview-section">
-          <h2 className="create-resume-preview-section-title">Experience</h2>
-          {resumeData.experience.filter(exp => exp.company || exp.position || exp.description).map((exp, index) => (
-            <div key={index} className="create-resume-preview-item">
-              <div className="d-flex justify-between items-start">
-                <h3 className="create-resume-preview-item-title">{exp.position || 'Position'}</h3>
-                <span className="create-resume-preview-item-dates">{exp.startDate} - {exp.endDate || 'Present'}</span>
-              </div>
-              <p className="create-resume-preview-item-subtitle">{exp.company || 'Company'} • {exp.location || 'Location'}</p>
-              <p className="create-resume-preview-item-description">{exp.description || 'Description'}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {resumeData.education.filter(edu => edu.institution || edu.degree).length > 0 && (
-        <div className="create-resume-preview-section">
-          <h2 className="create-resume-preview-section-title">Education</h2>
-          {resumeData.education.filter(edu => edu.institution || edu.degree).map((edu, index) => (
-            <div key={index} className="create-resume-preview-item">
-              <div className="d-flex justify-between items-start">
-                <h3 className="create-resume-preview-item-title">{edu.degree || 'Degree'}</h3>
-                <span className="create-resume-preview-item-dates">{edu.startDate} - {edu.endDate || 'Present'}</span>
-              </div>
-              <p className="create-resume-preview-item-subtitle">{edu.institution || 'Institution'} • {edu.fieldOfStudy || 'Field of Study'}</p>
-              {edu.grade && <p className="text-gray-600 text-sm">Grade: {edu.grade}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Skills */}
-      {resumeData.skills.filter(skill => skill.name).length > 0 && (
-        <div className="create-resume-preview-section">
-          <h2 className="create-resume-preview-section-title">Skills</h2>
-          <div className="create-resume-preview-skills">
-            {resumeData.skills.filter(skill => skill.name).map((skill, index) => (
-              <span key={index} className="create-resume-preview-skill">
-                {skill.name} ({skill.level})
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      {resumeData.projects.filter(project => project.name || project.description).length > 0 && (
-        <div className="create-resume-preview-section">
-          <h2 className="create-resume-preview-section-title">Projects</h2>
-          {resumeData.projects.filter(project => project.name || project.description).map((project, index) => (
-            <div key={index} className="create-resume-preview-item">
-              <div className="d-flex justify-between items-start">
-                <h3 className="create-resume-preview-item-title">{project.name || 'Project Name'}</h3>
-                {project.link && <a href={project.link} className="text-blue-600 text-sm hover:underline">{project.link}</a>}
-              </div>
-              <p className="create-resume-preview-item-description">{project.description || 'Description'}</p>
-              {project.technologies && <p className="text-gray-600 text-sm mt-1">Technologies: {project.technologies}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
+  const inputBase = {
+    width: '100%', background: c.input, border: `1.5px solid ${c.inputBorder}`,
+    borderRadius: 10, color: c.text, padding: '11px 14px', fontSize: 14,
+    outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box',
+    fontFamily: 'inherit',
+  };
+  const textareaBase = { ...inputBase, minHeight: 100, resize: 'vertical', lineHeight: 1.6 };
+  const selectBase = {
+    ...inputBase, appearance: 'none', cursor: 'pointer', paddingRight: 36,
+    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(isDark ? '#a5b4fc' : '#4f46e5')}' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e")`,
+    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: 14,
+  };
 
   return (
-    <div className={`create-resume-bg ${theme === 'dark' ? 'dark-mode' : ''}`}>
+    <div style={{ minHeight: '100vh', background: c.bg, transition: 'background 0.3s', overflowY: 'auto' }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .scroll-custom::-webkit-scrollbar { width: 5px; }
+        .scroll-custom::-webkit-scrollbar-track { background: transparent; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: ${isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)'}; border-radius: 3px; }
+        .scroll-custom::-webkit-scrollbar-thumb:hover { background: ${isDark ? 'rgba(99,102,241,0.4)' : 'rgba(99,102,241,0.25)'}; }
+        input:focus, select:focus, textarea:focus { border-color: ${c.accent} !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important; }
+        input:hover, select:hover, textarea:hover { border-color: ${isDark ? 'rgba(129,140,248,0.35)' : 'rgba(99,102,241,0.3)'} !important; }
+        @media (max-width: 1023px) { .form-scroll { overflow: visible !important; max-height: none !important; } }
+      `}</style>
+
       {/* Header */}
-      <header className={`create-resume-navbar ${theme === 'dark' ? 'dark-mode' : ''}`}>
-        <div className={`create-resume-nav-container ${theme === 'dark' ? 'dark-mode' : ''}`}>
-          <div className="create-resume-navbar-left flex items-center space-x-4 flex-shrink-0">
-            <div className="create-resume-brand-icon flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">ResumeBuilder</h1>
-              <div className="flex items-center mt-1">
-                <div className="create-resume-progress-container w-32">
-                  <div
-                    className="create-resume-progress-bar"
-                    style={{ width: `${overallCompletion()}%` }}
-                  ></div>
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        background: c.headerBg, backdropFilter: 'blur(20px)',
+        borderBottom: `1px solid ${c.border}`,
+        boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 4px 24px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 56 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <FileText style={{ width: 16, height: 16, color: '#fff' }} />
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Resume Builder</span>
+              <div style={{ width: 1, height: 18, background: c.border, margin: '0 4px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 50, height: 4, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(99,102,241,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', borderRadius: 2, background: 'linear-gradient(90deg, #818cf8, #a78bfa)', width: `${overallPct()}%`, transition: 'width 0.5s' }} />
                 </div>
-                <span className="text-sm text-white/80 ml-2 font-medium">{overallCompletion()}% Complete</span>
+                <span style={{ fontSize: 10, color: c.textMuted, fontWeight: 600 }}>{overallPct()}%</span>
               </div>
             </div>
-          </div>
-
-          <div className="create-resume-navbar-right flex items-center space-x-3 flex-wrap gap-2">
-            <div className="create-resume-title-container">
-              <input
-                type="text"
-                value={resumeData.title}
-                onChange={(e) => handleInputChange('title', 'title', e.target.value)}
-                className="create-resume-input"
-                placeholder="Enter resume title"
-              />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input type="text" value={resumeData.title}
+                onChange={e => handleChange('title', 'title', e.target.value)}
+                style={{ ...inputBase, width: 120, padding: '6px 10px', fontSize: 12, background: isDark ? 'rgba(255,255,255,0.04)' : c.input }}
+                placeholder="Resume title" />
+              <select value={resumeData.templateId}
+                onChange={e => handleChange('templateId', 'templateId', e.target.value)}
+                style={{ ...selectBase, width: 90, padding: '6px 10px', fontSize: 12, background: isDark ? 'rgba(255,255,255,0.04)' : c.input }}>
+                <option value="modern">Modern</option>
+                <option value="classic">Classic</option>
+                <option value="professional">Pro</option>
+              </select>
+              <button onClick={toggleTheme}
+                style={{ width: 32, height: 32, borderRadius: 8, background: isDark ? 'rgba(255,255,255,0.04)' : c.input, border: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: c.text, transition: 'all 0.2s', flexShrink: 0 }}>
+                {isDark ? <Sun style={{ width: 14, height: 14 }} /> : <Moon style={{ width: 14, height: 14 }} />}
+              </button>
+              <button onClick={saveResume} disabled={isSaving}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${c.accent}, #7c3aed)`, color: '#fff', boxShadow: `0 4px 12px rgba(99,102,241,0.25)`, opacity: isSaving ? 0.7 : 1, transition: 'all 0.2s' }}>
+                <Save style={{ width: 12, height: 12 }} />
+                <span>{isSaving ? 'Saving...' : 'Save'}</span>
+              </button>
             </div>
-
-            <select
-              value={resumeData.templateId}
-              onChange={(e) => handleInputChange('templateId', 'templateId', e.target.value)}
-              className="create-resume-select"
-            >
-              <option value="modern">Modern Template</option>
-              <option value="classic">Classic Template</option>
-              <option value="professional">Professional Template</option>
-            </select>
-
-            <button
-              onClick={() => toggleTheme()}
-              className="create-resume-theme-toggle p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-
-            <button
-              onClick={saveResume}
-              disabled={isSaving}
-              className="create-resume-btn create-resume-btn-save d-flex items-center space-x-2 px-4 py-2"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? 'Saving...' : 'Save'}</span>
-            </button>
-
-            <button
-              onClick={exportToPDF}
-              className="create-resume-btn create-resume-btn-export d-flex items-center space-x-2 px-4 py-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export PDF</span>
-            </button>
-
-            <button
-              onClick={() => navigate(`/resume/${id}`)}
-              className="create-resume-btn create-resume-btn-preview d-flex items-center space-x-2 px-4 py-2"
-            >
-              <Eye className="w-4 h-4" />
-              <span>Preview</span>
-            </button>
-
-            {saveStatus && (
-              <span className={`create-resume-status ${typeof saveStatus === 'string' && saveStatus.includes('Error') ? 'error' : typeof saveStatus === 'string' && saveStatus === 'Saved!' ? 'success' : ''}`}>
-                {saveStatus}
-              </span>
-            )}
           </div>
         </div>
       </header>
-      
-      {/* Main Content */}
 
-      <div className="create-resume-main">
-        {/* Sidebar - Hidden on mobile by default, shown with overlay */}
-        <div className={`create-resume-sidebar ${theme === 'dark' ? 'dark-mode' : ''} ${sidebarOpen ? 'open' : ''}`}>
-          <div className="create-resume-sidebar-header">
-            <div className="create-resume-sidebar-title-container">
-              <h2 className="create-resume-sidebar-title">Resume Sections</h2>
-              <div className="create-resume-total-completion">
-                <span className="create-resume-completion-text">Overall Progress:</span>
-                <span className="create-resume-completion-value">{overallCompletion()}%</span>
-              </div>
+      {/* Mobile toggle */}
+      <div style={{ display: 'none' }} className="mobile-toggle-placeholder" />
+
+      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '12px 16px' }}>
+        <div style={{ display: 'flex', gap: 16, flexDirection: window.innerWidth < 1024 ? 'column' : 'row' }}>
+          {/* Left sidebar - section nav */}
+          <div style={{
+            width: window.innerWidth < 1024 ? '100%' : 200, flexShrink: 0,
+            display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
+            <div style={{ padding: '8px 0', marginBottom: 4 }}>
+              <h3 style={{ fontSize: 11, fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Sections</h3>
             </div>
-            <p className="create-resume-sidebar-subtitle">Click to edit different sections</p>
-          </div>
-          <nav className="create-resume-nav-list">
-            {sections.map((section) => {
-              const IconComponent = section.icon;
-              const completion = calculateCompletion(section.id);
-              const isComplete = completion === 100;
-              const isInProgress = completion > 0 && completion < 100;
-
+            {sections.map(s => {
+              const Icon = s.icon;
+              const isActive = activeSection === s.id;
+              const pct = calcCompletion(s.id);
               return (
-                <button
-                  key={section.id}
-                  onClick={() => {
-                    setActiveSection(section.id);
-                    setSidebarOpen(false); // Close sidebar on mobile after selection
-                  }}
-                  className={`create-resume-nav-item ${theme === 'dark' ? 'dark-mode' : ''} ${activeSection === section.id ? 'active' : ''}`}
-                  aria-current={activeSection === section.id ? 'page' : undefined}
-                >
-                  <div className="create-resume-nav-icon">
-                    <IconComponent className="w-5 h-5" />
-                  </div>
-                  <div className="create-resume-nav-content">
-                    <div className="create-resume-nav-label">{section.label}</div>
-                    <div className="create-resume-nav-progress">
-                      <div className="create-resume-nav-progress-container">
-                        <div
-                          className="create-resume-nav-progress-bar"
-                          style={{ width: `${completion}%` }}
-                        ></div>
-                      </div>
-                      <span className={`create-resume-nav-progress-text ${
-                        isComplete ? 'complete' :
-                        isInProgress ? 'in-progress' :
-                        'not-started'
-                      }`}>
-                        {completion}%
-                      </span>
-                    </div>
-                  </div>
+                <button key={s.id} onClick={() => setActiveSection(s.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+                    borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                    background: isActive ? (isDark ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.1)') : 'transparent',
+                    color: isActive ? c.accent : c.textMuted,
+                    transition: 'all 0.15s', textAlign: 'left', width: '100%',
+                  }}>
+                  <Icon style={{ width: 16, height: 16, flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>{s.label}</span>
+                  {pct === 100 ? (
+                    <Check style={{ width: 12, height: 12, color: c.success }} />
+                  ) : (
+                    <span style={{ fontSize: 10, color: c.textMuted }}>{pct}%</span>
+                  )}
                 </button>
               );
             })}
-          </nav>
-        </div>
+          </div>
 
-        {/* Overlay for mobile sidebar */}
-        {sidebarOpen && (
-          <div
-            className="create-resume-overlay open"
-            onClick={() => setSidebarOpen(false)}
-          ></div>
-        )}
-
-        {/* Mobile header for toggling sidebar */}
-        <div className="create-resume-mobile-header lg:hidden">
-          <h2 className="create-resume-mobile-title">
-            {sections.find(s => s.id === activeSection)?.label || 'Resume Editor'}
-          </h2>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="create-resume-mobile-menu-btn"
-            aria-label="Toggle navigation menu"
-          >
-            <span>Menu</span>
-          </button>
-        </div>
-
-        {/* Main Editor - Fixed height container */}
-        <div className="create-resume-editor">
-          <div className="create-resume-editor-grid">
-            {/* Form Section - Independently scrollable */}
-            <div className="create-resume-form-section">
-              {activeSection === 'personal' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                  className={`create-resume-card personal ${theme === 'dark' ? 'dark-mode' : ''} create-resume-animate`}
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <User className="w-5 h-5" />
-                      Personal Information
-                    </h2>
+          {/* Middle - Form */}
+          <div className="scroll-custom" style={{
+            flex: 1, display: 'flex', flexDirection: 'column', gap: 10,
+            overflow: 'visible',
+            paddingRight: 4,
+          }}>
+            {sections.map(s => (
+              <SectionCard key={s.id} c={c} isDark={isDark} sectionMeta={sectionMeta} sectionId={s.id} isOpen={activeSection === s.id} onToggle={() => setActiveSection(activeSection === s.id ? null : s.id)} completionPct={calcCompletion(s.id)}>
+                {s.id === 'personal' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12, marginTop: 14 }}>
+                    <FormField c={c} label="Full Name" required error={getErr('personalInfo', 'fullName')}>
+                      <input type="text" value={resumeData.personalInfo?.fullName || ''} onChange={e => handleChange('personalInfo', 'fullName', e.target.value)}
+                        style={{ ...inputBase, borderColor: getErr('personalInfo', 'fullName') ? c.danger : c.inputBorder }} placeholder="John Doe" />
+                    </FormField>
+                    <FormField c={c} label="Email" required error={getErr('personalInfo', 'email')}>
+                      <input type="email" value={resumeData.personalInfo?.email || ''} onChange={e => handleChange('personalInfo', 'email', e.target.value)}
+                        style={{ ...inputBase, borderColor: getErr('personalInfo', 'email') ? c.danger : c.inputBorder }} placeholder="john@example.com" />
+                    </FormField>
+                    <FormField c={c} label="Job Title">
+                      <input type="text" value={resumeData.personalInfo?.jobTitle || ''} onChange={e => handleChange('personalInfo', 'jobTitle', e.target.value)} style={inputBase} placeholder="Software Engineer" />
+                    </FormField>
+                    <FormField c={c} label="Phone" error={getErr('personalInfo', 'phone')}>
+                      <input type="tel" value={resumeData.personalInfo?.phone || ''} onChange={e => handleChange('personalInfo', 'phone', e.target.value)}
+                        style={{ ...inputBase, borderColor: getErr('personalInfo', 'phone') ? c.danger : c.inputBorder }} placeholder="+1 (555) 123-4567" />
+                    </FormField>
+                    <FormField c={c} label="Location">
+                      <input type="text" value={resumeData.personalInfo?.address || ''} onChange={e => handleChange('personalInfo', 'address', e.target.value)} style={inputBase} placeholder="City, State" />
+                    </FormField>
+                    <FormField c={c} label="LinkedIn">
+                      <input type="url" value={resumeData.personalInfo?.linkedin || ''} onChange={e => handleChange('personalInfo', 'linkedin', e.target.value)} style={inputBase} placeholder="linkedin.com/in/username" />
+                    </FormField>
+                    <FormField c={c} label="GitHub">
+                      <input type="url" value={resumeData.personalInfo?.github || ''} onChange={e => handleChange('personalInfo', 'github', e.target.value)} style={inputBase} placeholder="github.com/username" />
+                    </FormField>
+                    <FormField c={c} label="Website">
+                      <input type="url" value={resumeData.personalInfo?.website || ''} onChange={e => handleChange('personalInfo', 'website', e.target.value)} style={inputBase} placeholder="yourwebsite.com" />
+                    </FormField>
                   </div>
+                )}
 
-                  <div className="create-resume-form-grid personal-info-grid">
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Full Name</label>
-                      <input
-                        type="text"
-                        value={resumeData.personalInfo?.fullName || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'fullName', e.target.value)}
-                        className={`create-resume-form-input ${getValidationError('personalInfo', 'fullName') ? 'error' : ''}`}
-                        placeholder="John Doe"
-                      />
-                      {getValidationError('personalInfo', 'fullName') && (
-                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'fullName')}</p>
-                      )}
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Email</label>
-                      <input
-                        type="email"
-                        value={resumeData.personalInfo?.email || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)}
-                        className={`create-resume-form-input ${getValidationError('personalInfo', 'email') ? 'error' : ''}`}
-                        placeholder="john@example.com"
-                      />
-                      {getValidationError('personalInfo', 'email') && (
-                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'email')}</p>
-                      )}
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Phone</label>
-                      <input
-                        type="tel"
-                        value={resumeData.personalInfo?.phone || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)}
-                        className={`create-resume-form-input ${getValidationError('personalInfo', 'phone') ? 'error' : ''}`}
-                        placeholder="+1 (555) 123-4567"
-                      />
-                      {getValidationError('personalInfo', 'phone') && (
-                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'phone')}</p>
-                      )}
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Address</label>
-                      <input
-                        type="text"
-                        value={resumeData.personalInfo?.address || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'address', e.target.value)}
-                        className="create-resume-form-input"
-                        placeholder="123 Main St, City"
-                      />
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">LinkedIn</label>
-                      <input
-                        type="url"
-                        value={resumeData.personalInfo?.linkedin || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'linkedin', e.target.value)}
-                        className={`create-resume-form-input ${getValidationError('personalInfo', 'linkedin') ? 'error' : ''}`}
-                        placeholder="https://linkedin.com/in/username"
-                      />
-                      {getValidationError('personalInfo', 'linkedin') && (
-                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'linkedin')}</p>
-                      )}
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">GitHub</label>
-                      <input
-                        type="url"
-                        value={resumeData.personalInfo?.github || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'github', e.target.value)}
-                        className={`create-resume-form-input ${getValidationError('personalInfo', 'github') ? 'error' : ''}`}
-                        placeholder="https://github.com/username"
-                      />
-                      {getValidationError('personalInfo', 'github') && (
-                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'github')}</p>
-                      )}
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Website</label>
-                      <input
-                        type="url"
-                        value={resumeData.personalInfo?.website || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'website', e.target.value)}
-                        className={`create-resume-form-input ${getValidationError('personalInfo', 'website') ? 'error' : ''}`}
-                        placeholder="https://yourwebsite.com"
-                      />
-                      {getValidationError('personalInfo', 'website') && (
-                        <p className="create-resume-error-message">{getValidationError('personalInfo', 'website')}</p>
-                      )}
-                    </div>
-
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Professional Summary</label>
-                      <textarea
-                        value={resumeData.personalInfo?.summary || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'summary', e.target.value)}
-                        className="create-resume-form-textarea"
-                        placeholder="A brief summary of your professional background and career goals..."
-                        rows="4"
-                      />
-                    </div>
+                {s.id === 'summary' && (
+                  <div style={{ marginTop: 14 }}>
+                    <FormField c={c} label="Professional Summary">
+                      <textarea value={resumeData.personalInfo?.summary || ''} onChange={e => handleChange('personalInfo', 'summary', e.target.value)}
+                        style={textareaBase} rows={4}
+                        placeholder="A brief summary highlighting your key qualifications and career objectives..." />
+                    </FormField>
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {activeSection === 'summary' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`create-resume-card summary ${theme === 'dark' ? 'dark-mode' : ''} create-resume-animate`}
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <FileText className="w-5 h-5" />
-                      Professional Summary
-                    </h2>
-                  </div>
-
-                  <div className="create-resume-form-grid personal-info-grid">
-                    <div className="create-resume-form-field">
-                      <label className="create-resume-form-label">Summary</label>
-                      <textarea
-                        value={resumeData.personalInfo?.summary || ''}
-                        onChange={(e) => handleInputChange('personalInfo', 'summary', e.target.value)}
-                        className="create-resume-form-textarea"
-                        placeholder="A compelling summary that highlights your key qualifications, experience, and career objectives..."
-                        rows="6"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeSection === 'education' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="create-resume-card education create-resume-animate"
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <GraduationCap className="w-5 h-5" />
-                      Education
-                    </h2>
-                    <button
-                      onClick={() => addNewItem('education')}
-                      className="create-resume-add-btn"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-
-                  <div className="create-resume-form-grid personal-info-grid">
+                {s.id === 'education' && (
+                  <div style={{ marginTop: 14 }}>
                     {(resumeData.education || []).length === 0 ? (
-                      <div className="col-span-full text-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                          <GraduationCap className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          No education added yet
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          Click the "Add" button to add your educational background
-                        </p>
-                        <button
-                          onClick={() => addNewItem('education')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Your First Education
+                      <EmptyState c={c} icon={GraduationCap} title="No education added"
+                        desc="Add your academic background to strengthen your resume."
+                        action="Add Education" onClick={() => addItem('education')}
+                        color="#10b981" />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {(resumeData.education || []).map((edu, i) => (
+                          <div key={i} style={{ background: c.itemBg, borderRadius: 10, padding: 14, border: `1px solid ${c.border}`, position: 'relative' }}>
+                            <button onClick={() => removeItem('education', i)}
+                              style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: `${c.danger}18`, border: `1px solid ${c.danger}30`, color: c.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <Trash2 style={{ width: 13, height: 13 }} />
+                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                              <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #14b8a6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                              <span style={{ fontSize: 12, color: c.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {edu.institution || edu.degree ? `${edu.institution || 'Institution'} - ${edu.degree || 'Degree'}` : 'New Education'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                              <FormField c={c} label="Institution"><input type="text" value={edu?.institution || ''} onChange={e => handleChange('education', 'institution', e.target.value, i)} style={inputBase} placeholder="University" /></FormField>
+                              <FormField c={c} label="Degree"><input type="text" value={edu?.degree || ''} onChange={e => handleChange('education', 'degree', e.target.value, i)} style={inputBase} placeholder="Bachelor's" /></FormField>
+                              <FormField c={c} label="Field"><input type="text" value={edu?.fieldOfStudy || ''} onChange={e => handleChange('education', 'fieldOfStudy', e.target.value, i)} style={inputBase} placeholder="Computer Science" /></FormField>
+                              <FormField c={c} label="GPA"><input type="text" value={edu?.grade || ''} onChange={e => handleChange('education', 'grade', e.target.value, i)} style={inputBase} placeholder="3.8/4.0" /></FormField>
+                              <FormField c={c} label="Start"><input type="month" value={edu?.startDate || ''} onChange={e => handleChange('education', 'startDate', e.target.value, i)} style={inputBase} /></FormField>
+                              <FormField c={c} label="End"><input type="month" value={edu?.endDate || ''} onChange={e => handleChange('education', 'endDate', e.target.value, i)} style={inputBase} /></FormField>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={() => addItem('education')}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1.5px dashed ${c.border}`, background: 'transparent', color: c.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <Plus style={{ width: 14, height: 14 }} /> Add Education
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        {resumeData.education.map((edu, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="create-resume-item group"
-                          >
-                            <button
-                              onClick={() => removeItem('education', index)}
-                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              title="Remove this education"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-
-                            <div className="create-resume-form-grid">
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Institution</label>
-                                <input
-                                  type="text"
-                                  value={edu?.institution || ''}
-                                  onChange={(e) => handleInputChange('education', 'institution', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="University Name"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Degree</label>
-                                <input
-                                  type="text"
-                                  value={edu?.degree || ''}
-                                  onChange={(e) => handleInputChange('education', 'degree', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Bachelor's, Master's, etc."
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Field of Study</label>
-                                <input
-                                  type="text"
-                                  value={edu?.fieldOfStudy || ''}
-                                  onChange={(e) => handleInputChange('education', 'fieldOfStudy', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Computer Science, Business, etc."
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Grade/GPA</label>
-                                <input
-                                  type="text"
-                                  value={edu?.grade || ''}
-                                  onChange={(e) => handleInputChange('education', 'grade', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="3.8/4.0, A-, etc."
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Start Date</label>
-                                <input
-                                  type="month"
-                                  value={edu?.startDate || ''}
-                                  onChange={(e) => handleInputChange('education', 'startDate', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">End Date</label>
-                                <input
-                                  type="month"
-                                  value={edu?.endDate || ''}
-                                  onChange={(e) => handleInputChange('education', 'endDate', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                />
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </>
                     )}
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {activeSection === 'experience' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="create-resume-card experience create-resume-animate"
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <Briefcase className="w-5 h-5" />
-                      Work Experience
-                    </h2>
-                    <button
-                      onClick={() => addNewItem('experience')}
-                      className="create-resume-add-btn"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-
-                  <div className="create-resume-form-grid personal-info-grid">
+                {s.id === 'experience' && (
+                  <div style={{ marginTop: 14 }}>
                     {(resumeData.experience || []).length === 0 ? (
-                      <div className="col-span-full text-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                          <Briefcase className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          No work experience added yet
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          Click the "Add" button to add your work history
-                        </p>
-                        <button
-                          onClick={() => addNewItem('experience')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Your First Experience
+                      <EmptyState c={c} icon={Briefcase} title="No experience added"
+                        desc="Add your work history to showcase your career journey."
+                        action="Add Experience" onClick={() => addItem('experience')}
+                        color="#f59e0b" />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {(resumeData.experience || []).map((exp, i) => (
+                          <div key={i} style={{ background: c.itemBg, borderRadius: 10, padding: 14, border: `1px solid ${c.border}`, position: 'relative' }}>
+                            <button onClick={() => removeItem('experience', i)}
+                              style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: `${c.danger}18`, border: `1px solid ${c.danger}30`, color: c.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <Trash2 style={{ width: 13, height: 13 }} />
+                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                              <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #f97316)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                              <span style={{ fontSize: 12, color: c.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {exp.company || exp.position ? `${exp.company || 'Company'} - ${exp.position || 'Position'}` : 'New Experience'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                              <FormField c={c} label="Company"><input type="text" value={exp?.company || ''} onChange={e => handleChange('experience', 'company', e.target.value, i)} style={inputBase} placeholder="Company" /></FormField>
+                              <FormField c={c} label="Position"><input type="text" value={exp?.position || ''} onChange={e => handleChange('experience', 'position', e.target.value, i)} style={inputBase} placeholder="Job Title" /></FormField>
+                              <FormField c={c} label="Location"><input type="text" value={exp?.location || ''} onChange={e => handleChange('experience', 'location', e.target.value, i)} style={inputBase} placeholder="City, State" /></FormField>
+                              <FormField c={c} label="Start"><input type="month" value={exp?.startDate || ''} onChange={e => handleChange('experience', 'startDate', e.target.value, i)} style={inputBase} /></FormField>
+                              <FormField c={c} label="End"><input type="month" value={exp?.endDate || ''} onChange={e => handleChange('experience', 'endDate', e.target.value, i)} style={inputBase} placeholder="Leave blank if current" /></FormField>
+                            </div>
+                            <div style={{ marginTop: 10 }}>
+                              <FormField c={c} label="Description">
+                                <textarea value={exp?.description || ''} onChange={e => handleChange('experience', 'description', e.target.value, i)} style={textareaBase} rows={3} placeholder="Describe your responsibilities and achievements..." />
+                              </FormField>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={() => addItem('experience')}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1.5px dashed ${c.border}`, background: 'transparent', color: c.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <Plus style={{ width: 14, height: 14 }} /> Add Experience
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        {resumeData.experience.map((exp, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="create-resume-item group"
-                          >
-                            <button
-                              onClick={() => removeItem('experience', index)}
-                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              title="Remove this experience"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-
-                            <div className="create-resume-form-grid">
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Company</label>
-                                <input
-                                  type="text"
-                                  value={exp?.company || ''}
-                                  onChange={(e) => handleInputChange('experience', 'company', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Company Name"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Position</label>
-                                <input
-                                  type="text"
-                                  value={exp?.position || ''}
-                                  onChange={(e) => handleInputChange('experience', 'position', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Job Title"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Location</label>
-                                <input
-                                  type="text"
-                                  value={exp?.location || ''}
-                                  onChange={(e) => handleInputChange('experience', 'location', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="City, State"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Start Date</label>
-                                <input
-                                  type="month"
-                                  value={exp?.startDate || ''}
-                                  onChange={(e) => handleInputChange('experience', 'startDate', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">End Date</label>
-                                <input
-                                  type="month"
-                                  value={exp?.endDate || ''}
-                                  onChange={(e) => handleInputChange('experience', 'endDate', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Leave blank if current"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="create-resume-form-field mt-4">
-                              <label className="create-resume-form-label">Description</label>
-                              <textarea
-                                value={exp?.description || ''}
-                                onChange={(e) => handleInputChange('experience', 'description', e.target.value, index)}
-                                className="create-resume-form-textarea"
-                                placeholder="Describe your responsibilities and achievements..."
-                                rows="3"
-                              />
-                            </div>
-                          </motion.div>
-                        ))}
-                      </>
                     )}
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {activeSection === 'skills' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="create-resume-card skills create-resume-animate"
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <Code className="w-5 h-5" />
-                      Skills
-                    </h2>
-                    <button
-                      onClick={() => addNewItem('skills')}
-                      className="create-resume-add-btn"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-
-                  <div className="create-resume-form-grid personal-info-grid">
+                {s.id === 'skills' && (
+                  <div style={{ marginTop: 14 }}>
                     {(resumeData.skills || []).length === 0 ? (
-                      <div className="col-span-full text-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                          <Code className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          No skills added yet
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          Click the "Add" button to add your technical and soft skills
-                        </p>
-                        <button
-                          onClick={() => addNewItem('skills')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Your First Skill
-                        </button>
-                      </div>
+                      <EmptyState c={c} icon={Code} title="No skills added"
+                        desc="Add your technical and professional skills."
+                        action="Add Skill" onClick={() => addItem('skills')}
+                        color="#f43f5e" />
                     ) : (
-                      <>
-                        {resumeData.skills.map((skill, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="create-resume-item group"
-                          >
-                            <button
-                              onClick={() => removeItem('skills', index)}
-                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              title="Remove this skill"
-                            >
-                              <X className="w-4 h-4" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {(resumeData.skills || []).map((skill, i) => (
+                          <div key={i} style={{ background: c.itemBg, borderRadius: 10, padding: 12, border: `1px solid ${c.border}`, position: 'relative' }}>
+                            <button onClick={() => removeItem('skills', i)}
+                              style={{ position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 6, background: `${c.danger}18`, border: `1px solid ${c.danger}30`, color: c.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', padding: 0 }}>
+                              <X style={{ width: 12, height: 12 }} />
                             </button>
-
-                            <div className="create-resume-form-grid">
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Skill Name</label>
-                                <input
-                                  type="text"
-                                  value={skill?.name || ''}
-                                  onChange={(e) => handleInputChange('skills', 'name', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="JavaScript, Python, Leadership..."
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Proficiency Level</label>
-                                <select
-                                  value={skill?.level || 'Intermediate'}
-                                  onChange={(e) => handleInputChange('skills', 'level', e.target.value, index)}
-                                  className="create-resume-form-select"
-                                >
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                              <FormField c={c} label="Skill"><input type="text" value={skill?.name || ''} onChange={e => handleChange('skills', 'name', e.target.value, i)} style={inputBase} placeholder="JavaScript, Python..." /></FormField>
+                              <FormField c={c} label="Level">
+                                <select value={skill?.level || 'Intermediate'} onChange={e => handleChange('skills', 'level', e.target.value, i)} style={selectBase}>
                                   <option value="Beginner">Beginner</option>
                                   <option value="Intermediate">Intermediate</option>
                                   <option value="Advanced">Advanced</option>
                                   <option value="Expert">Expert</option>
                                 </select>
-                              </div>
+                              </FormField>
                             </div>
-                          </motion.div>
+                          </div>
                         ))}
-                      </>
+                        <button onClick={() => addItem('skills')}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1.5px dashed ${c.border}`, background: 'transparent', color: c.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <Plus style={{ width: 14, height: 14 }} /> Add Skill
+                        </button>
+                      </div>
                     )}
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {activeSection === 'projects' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="create-resume-card projects create-resume-animate"
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <Award className="w-5 h-5" />
-                      Projects
-                    </h2>
-                    <button
-                      onClick={() => addNewItem('projects')}
-                      className="create-resume-add-btn"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-
-                  <div className="create-resume-form-grid personal-info-grid">
+                {s.id === 'projects' && (
+                  <div style={{ marginTop: 14 }}>
                     {(resumeData.projects || []).length === 0 ? (
-                      <div className="col-span-full text-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                          <Award className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          No projects added yet
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          Click the "Add" button to showcase your work
-                        </p>
-                        <button
-                          onClick={() => addNewItem('projects')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Your First Project
+                      <EmptyState c={c} icon={Award} title="No projects added"
+                        desc="Showcase your work to demonstrate your capabilities."
+                        action="Add Project" onClick={() => addItem('projects')}
+                        color="#6366f1" />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {(resumeData.projects || []).map((proj, i) => (
+                          <div key={i} style={{ background: c.itemBg, borderRadius: 10, padding: 14, border: `1px solid ${c.border}`, position: 'relative' }}>
+                            <button onClick={() => removeItem('projects', i)}
+                              style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: `${c.danger}18`, border: `1px solid ${c.danger}30`, color: c.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <Trash2 style={{ width: 13, height: 13 }} />
+                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                              <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                              <span style={{ fontSize: 12, color: c.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{proj.name || 'New Project'}</span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                              <FormField c={c} label="Name"><input type="text" value={proj?.name || ''} onChange={e => handleChange('projects', 'name', e.target.value, i)} style={inputBase} placeholder="Project Name" /></FormField>
+                              <FormField c={c} label="Technologies"><input type="text" value={proj?.technologies || ''} onChange={e => handleChange('projects', 'technologies', e.target.value, i)} style={inputBase} placeholder="React, Node.js..." /></FormField>
+                              <FormField c={c} label="Link"><input type="url" value={proj?.link || ''} onChange={e => handleChange('projects', 'link', e.target.value, i)} style={inputBase} placeholder="https://..." /></FormField>
+                            </div>
+                            <div style={{ marginTop: 10 }}>
+                              <FormField c={c} label="Description">
+                                <textarea value={proj?.description || ''} onChange={e => handleChange('projects', 'description', e.target.value, i)} style={textareaBase} rows={2} placeholder="Describe the project..." />
+                              </FormField>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={() => addItem('projects')}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1.5px dashed ${c.border}`, background: 'transparent', color: c.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <Plus style={{ width: 14, height: 14 }} /> Add Project
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        {resumeData.projects.map((project, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="create-resume-item group"
-                          >
-                            <button
-                              onClick={() => removeItem('projects', index)}
-                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              title="Remove this project"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-
-                            <div className="create-resume-form-grid">
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Project Name</label>
-                                <input
-                                  type="text"
-                                  value={project?.name || ''}
-                                  onChange={(e) => handleInputChange('projects', 'name', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Project Name"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Technologies Used</label>
-                                <input
-                                  type="text"
-                                  value={project?.technologies || ''}
-                                  onChange={(e) => handleInputChange('projects', 'technologies', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="React, Node.js, MongoDB..."
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Project Link</label>
-                                <input
-                                  type="url"
-                                  value={project?.link || ''}
-                                  onChange={(e) => handleInputChange('projects', 'link', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="https://project-url.com"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="create-resume-form-field mt-4">
-                              <label className="create-resume-form-label">Description</label>
-                              <textarea
-                                value={project?.description || ''}
-                                onChange={(e) => handleInputChange('projects', 'description', e.target.value, index)}
-                                className="create-resume-form-textarea"
-                                placeholder="Describe the project, your role, and key accomplishments..."
-                                rows="3"
-                              />
-                            </div>
-                          </motion.div>
-                        ))}
-                      </>
                     )}
                   </div>
-                </motion.div>
-              )}
+                )}
 
-              {activeSection === 'certifications' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                  className="create-resume-card certifications create-resume-animate"
-                >
-                  <div className="create-resume-card-header">
-                    <h2 className="create-resume-card-title">
-                      <Award className="w-5 h-5" />
-                      Certifications
-                    </h2>
-                    <button
-                      onClick={() => addNewItem('certifications')}
-                      className="create-resume-add-btn"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-
-                  <div className="create-resume-form-grid personal-info-grid">
+                {s.id === 'certifications' && (
+                  <div style={{ marginTop: 14 }}>
                     {(resumeData.certifications || []).length === 0 ? (
-                      <div className="col-span-full text-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800">
-                          <Award className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          No certifications added yet
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          Click the "Add" button to add your certifications
-                        </p>
-                        <button
-                          onClick={() => addNewItem('certifications')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-all duration-200"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Your First Certification
+                      <EmptyState c={c} icon={Star} title="No certifications added"
+                        desc="Add professional certifications and credentials."
+                        action="Add Certification" onClick={() => addItem('certifications')}
+                        color="#06b6d4" />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {(resumeData.certifications || []).map((cert, i) => (
+                          <div key={i} style={{ background: c.itemBg, borderRadius: 10, padding: 14, border: `1px solid ${c.border}`, position: 'relative' }}>
+                            <button onClick={() => removeItem('certifications', i)}
+                              style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: `${c.danger}18`, border: `1px solid ${c.danger}30`, color: c.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <Trash2 style={{ width: 13, height: 13 }} />
+                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                              <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, #06b6d4, #0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                              <span style={{ fontSize: 12, color: c.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {cert.name || cert.issuer ? `${cert.name || 'Certification'} - ${cert.issuer || 'Issuer'}` : 'New Certification'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                              <FormField c={c} label="Name"><input type="text" value={cert?.name || ''} onChange={e => handleChange('certifications', 'name', e.target.value, i)} style={inputBase} placeholder="AWS Certified Developer" /></FormField>
+                              <FormField c={c} label="Issuer"><input type="text" value={cert?.issuer || ''} onChange={e => handleChange('certifications', 'issuer', e.target.value, i)} style={inputBase} placeholder="Amazon Web Services" /></FormField>
+                              <FormField c={c} label="Date"><input type="month" value={cert?.date || ''} onChange={e => handleChange('certifications', 'date', e.target.value, i)} style={inputBase} /></FormField>
+                              <FormField c={c} label="Credential ID"><input type="text" value={cert?.credentialId || ''} onChange={e => handleChange('certifications', 'credentialId', e.target.value, i)} style={inputBase} placeholder="ABC-123" /></FormField>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={() => addItem('certifications')}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1.5px dashed ${c.border}`, background: 'transparent', color: c.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <Plus style={{ width: 14, height: 14 }} /> Add Certification
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        {resumeData.certifications.map((cert, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="create-resume-item group"
-                          >
-                            <button
-                              onClick={() => removeItem('certifications', index)}
-                              className="create-resume-remove-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              title="Remove this certification"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-
-                            <div className="create-resume-form-grid">
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Certification Name</label>
-                                <input
-                                  type="text"
-                                  value={cert?.name || ''}
-                                  onChange={(e) => handleInputChange('certifications', 'name', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="AWS Certified Developer"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Issuer</label>
-                                <input
-                                  type="text"
-                                  value={cert?.issuer || ''}
-                                  onChange={(e) => handleInputChange('certifications', 'issuer', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="Amazon Web Services"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Date</label>
-                                <input
-                                  type="month"
-                                  value={cert?.date || ''}
-                                  onChange={(e) => handleInputChange('certifications', 'date', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                />
-                              </div>
-
-                              <div className="create-resume-form-field">
-                                <label className="create-resume-form-label">Credential ID</label>
-                                <input
-                                  type="text"
-                                  value={cert?.credentialId || ''}
-                                  onChange={(e) => handleInputChange('certifications', 'credentialId', e.target.value, index)}
-                                  className="create-resume-form-input"
-                                  placeholder="ID-123456"
-                                />
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </>
                     )}
                   </div>
-                </motion.div>
-              )}
-            </div>
+                )}
+              </SectionCard>
+            ))}
+          </div>
 
-            {/* Live Preview */}
-            <div className="lg:sticky lg:top-6 lg:self-start mt-6 lg:mt-0">
-              <div className="create-resume-preview">
-                <div className="create-resume-preview-header">
-                  <div className="flex items-center">
-                    <Eye className="w-5 h-5 mr-2" />
-                    <h3 className="create-resume-preview-title">Live Preview</h3>
+          {/* Right - Preview */}
+          <div style={{ width: window.innerWidth < 1024 ? '100%' : 420, flexShrink: 0 }}>
+            <div style={{ position: window.innerWidth < 1024 ? 'static' : 'sticky', top: 76 }}>
+              <div style={{
+                background: c.surface, borderRadius: 14, overflow: 'hidden',
+                border: `1px solid ${c.border}`,
+                boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.04)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: `1px solid ${c.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Layout style={{ width: 14, height: 14, color: c.accent }} />
+                    <span style={{ color: c.text, fontWeight: 600, fontSize: 12 }}>Preview</span>
                   </div>
-                  <div className="create-resume-preview-actions">
-                    <span className="text-sm text-gray-600 dark:text-gray-300 mr-2">Zoom:</span>
-                    <button
-                      onClick={() => setPreviewScale('75')}
-                      className={`zoom-btn ${previewScale === '75' ? 'active' : ''}`}
-                      title="75% Zoom"
-                    >
-                      75%
-                    </button>
-                    <button
-                      onClick={() => setPreviewScale('90')}
-                      className={`zoom-btn ${previewScale === '90' ? 'active' : ''}`}
-                      title="90% Zoom"
-                    >
-                      90%
-                    </button>
-                    <button
-                      onClick={() => setPreviewScale('100')}
-                      className={`zoom-btn ${previewScale === '100' ? 'active' : ''}`}
-                      title="100% Zoom"
-                    >
-                      100%
-                    </button>
-                    <button
-                      onClick={() => setPreviewScale('110')}
-                      className={`zoom-btn ${previewScale === '110' ? 'active' : ''}`}
-                      title="110% Zoom"
-                    >
-                      110%
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                    {['75', '90', '100', '110'].map(z => (
+                      <button key={z} onClick={() => setPreviewScale(z)}
+                        style={{
+                          padding: '2px 7px', borderRadius: 5, fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                          background: previewScale === z ? c.accent : 'transparent',
+                          color: previewScale === z ? '#fff' : c.textMuted,
+                        }}>
+                        {z}%
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="create-resume-preview-content">
-                  <div className={`create-resume-preview-scale zoom-${previewScale}`}>
-                    <LivePreview />
+                <div className="scroll-custom" style={{ padding: 12, maxHeight: window.innerWidth < 1024 ? '420px' : 'calc(100vh - 190px)', overflowY: 'auto', background: isDark ? '#090b15' : '#f1f4f9' }}>
+                  <div style={{ transition: 'transform 0.3s', transform: getPreviewTransform(previewScale), transformOrigin: 'top center' }}>
+                    <LivePreview resumeData={resumeData} />
                   </div>
                 </div>
               </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button onClick={exportPDF}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 14px', borderRadius: 9, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', boxShadow: `0 4px 12px rgba(16,185,129,0.2)`, transition: 'all 0.2s' }}>
+                  <Download style={{ width: 13, height: 13 }} /> PDF
+                </button>
+                <button onClick={() => navigate(`/resume/${id}`)}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 14px', borderRadius: 9, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${c.accent}, #7c3aed)`, color: '#fff', boxShadow: `0 4px 12px rgba(99,102,241,0.2)`, transition: 'all 0.2s' }}>
+                  <Eye style={{ width: 13, height: 13 }} /> Full View
+                </button>
+              </div>
+
+              {saveStatus && (
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                  style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, textAlign: 'center',
+                    background: saveStatus === 'Saved!' ? `${c.success}18` : saveStatus.includes('Error') ? `${c.danger}18` : `${c.accent}18`,
+                    color: saveStatus === 'Saved!' ? c.success : saveStatus.includes('Error') ? c.danger : c.accent,
+                    border: `1px solid ${saveStatus === 'Saved!' ? `${c.success}30` : saveStatus.includes('Error') ? `${c.danger}30` : `${c.accent}30`}` }}>
+                  {saveStatus}
+                </motion.div>
+              )}
             </div>
           </div>
         </div>
