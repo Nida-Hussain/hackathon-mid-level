@@ -19,7 +19,8 @@ import {
   Calendar,
   Building,
   Sun,
-  Moon
+  Moon,
+  Globe
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -49,8 +50,17 @@ function ResumePreview() {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setResumeData(docSnap.data());
-        setSelectedTemplate(docSnap.data().templateId || 'modern');
+        const data = docSnap.data();
+        setResumeData({
+          ...data,
+          personalInfo: data.personalInfo || {},
+          experience: Array.isArray(data.experience) ? data.experience : [],
+          education: Array.isArray(data.education) ? data.education : [],
+          skills: Array.isArray(data.skills) ? data.skills : [],
+          projects: Array.isArray(data.projects) ? data.projects : [],
+          certifications: Array.isArray(data.certifications) ? data.certifications : [],
+        });
+        setSelectedTemplate(data.templateId || 'modern');
       }
     } catch (error) {
       console.error('Error loading resume:', error);
@@ -127,7 +137,7 @@ function ResumePreview() {
   const ResumeTemplate = () => {
     if (selectedTemplate === 'classic') {
       return (
-        <div className="bg-white p-8 shadow-lg min-h-[842px] w-[595px] mx-auto">
+        <div className="bg-white p-8 shadow-lg mx-auto" style={{ minHeight: '842px', width: '595px' }}>
           {/* Header */}
           <div className="border-b-2 border-gray-800 pb-4 mb-6">
             <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">
@@ -255,7 +265,7 @@ function ResumePreview() {
       );
     } else if (selectedTemplate === 'professional') {
       return (
-        <div className="bg-white p-8 shadow-lg min-h-[842px] w-[595px] mx-auto">
+        <div className="bg-white p-8 shadow-lg mx-auto" style={{ minHeight: '842px', width: '595px' }}>
           {/* Header */}
           <div className="border-b border-gray-300 pb-4 mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-1">
@@ -410,7 +420,7 @@ function ResumePreview() {
     } else {
       // Modern template (default)
       return (
-        <div className="bg-white p-8 shadow-lg min-h-[842px] w-[595px] mx-auto">
+        <div className="bg-white p-8 shadow-lg mx-auto" style={{ minHeight: '842px', width: '595px' }}>
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-lg mb-6">
             <h1 className="text-3xl font-bold mb-2">
