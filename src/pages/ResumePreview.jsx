@@ -7,19 +7,13 @@ import {
   Printer,
   ArrowLeft,
   User,
-  GraduationCap,
-  Briefcase,
-  Code,
-  Award,
-  FileText,
+  Sun,
+  Moon,
   Mail,
   Phone,
   MapPin,
   ExternalLink,
   Calendar,
-  Building,
-  Sun,
-  Moon,
   Globe
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -28,6 +22,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ResumeLivePreview from '../components/ResumeLivePreview';
 
 function ResumePreview() {
   const { id } = useParams();
@@ -418,161 +413,7 @@ function ResumePreview() {
         </div>
       );
     } else {
-      // Modern template (default)
-      return (
-        <div className="bg-white p-8 shadow-lg mx-auto" style={{ minHeight: '842px', width: '595px' }}>
-          {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-lg mb-6">
-            <h1 className="text-3xl font-bold mb-2">
-              {resumeData.personalInfo.fullName || 'Your Name'}
-            </h1>
-            {resumeData.personalInfo.jobTitle && (
-              <p className="text-xl font-semibold mb-2">
-                {resumeData.personalInfo.jobTitle}
-              </p>
-            )}
-            <p className="text-indigo-100 mb-4">
-              {resumeData.personalInfo.address || 'Professional Title'}
-            </p>
-
-            <div className="d-flex flex-wrap gap-4 text-sm">
-              {resumeData.personalInfo.email && (
-                <div className="d-flex items-center">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {resumeData.personalInfo.email}
-                </div>
-              )}
-              {resumeData.personalInfo.phone && (
-                <div className="d-flex items-center">
-                  <Phone className="w-4 h-4 mr-2" />
-                  {resumeData.personalInfo.phone}
-                </div>
-              )}
-              {resumeData.personalInfo.linkedin && (
-                <div className="d-flex items-center">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  {resumeData.personalInfo.linkedin.replace('https://', '')}
-                </div>
-              )}
-              {resumeData.personalInfo.dob && (() => {
-                try {
-                  const date = new Date(resumeData.personalInfo.dob);
-                  if (isNaN(date.getTime())) return null;
-                  return (
-                    <div className="d-flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      DOB: {date.toLocaleDateString()}
-                    </div>
-                  );
-                } catch (e) {
-                  return null;
-                }
-              })()}
-              {resumeData.personalInfo.nationality && (
-                <div className="d-flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Nationality: {resumeData.personalInfo.nationality}
-                </div>
-              )}
-              {resumeData.personalInfo.maritalStatus && (
-                <div className="d-flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  {resumeData.personalInfo.maritalStatus}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Objective */}
-          {resumeData.personalInfo.objective && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2 text-gray-800 border-l-4 border-indigo-600 pl-3">CAREER OBJECTIVE</h2>
-              <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">{resumeData.personalInfo.objective}</p>
-            </div>
-          )}
-
-          {/* Summary */}
-          {resumeData.personalInfo.summary && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2 text-gray-800 border-l-4 border-indigo-600 pl-3">PROFESSIONAL SUMMARY</h2>
-              <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">{resumeData.personalInfo.summary}</p>
-            </div>
-          )}
-
-          <div className="d-grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="d-grid gap-6">
-              {/* Experience */}
-              {resumeData.experience.filter(exp => exp.company || exp.position || exp.description).length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-3 text-gray-800 border-l-4 border-indigo-600 pl-3">EXPERIENCE</h2>
-                  {resumeData.experience.filter(exp => exp.company || exp.position || exp.description).map((exp, index) => (
-                    <div key={index} className="mb-4 bg-gray-50 p-4 rounded-lg">
-                      <div className="d-flex justify-between items-start mb-1">
-                        <h3 className="font-bold text-gray-900">{exp.position || 'Position'}</h3>
-                        <span className="text-sm text-gray-600">{exp.startDate} - {exp.endDate || 'Present'}</span>
-                      </div>
-                      <p className="text-gray-700 font-medium mb-2">{exp.company || 'Company'} • {exp.location || 'Location'}</p>
-                      <p className="text-gray-600 text-sm">{exp.description || 'Description'}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Skills */}
-              {resumeData.skills.filter(skill => skill.name).length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-3 text-gray-800 border-l-4 border-indigo-600 pl-3">SKILLS</h2>
-                  <div className="d-flex flex-wrap gap-2">
-                    {resumeData.skills.filter(skill => skill.name).map((skill, index) => (
-                      <span key={index} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {skill.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Column */}
-            <div className="d-grid gap-6">
-              {/* Education */}
-              {resumeData.education.filter(edu => edu.institution || edu.degree).length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-3 text-gray-800 border-l-4 border-indigo-600 pl-3">EDUCATION</h2>
-                  {resumeData.education.filter(edu => edu.institution || edu.degree).map((edu, index) => (
-                    <div key={index} className="mb-3 bg-gray-50 p-4 rounded-lg">
-                      <div className="d-flex justify-between items-start mb-1">
-                        <h3 className="font-bold text-gray-900">{edu.degree || 'Degree'}</h3>
-                        <span className="text-sm text-gray-600">{edu.startDate} - {edu.endDate || 'Present'}</span>
-                      </div>
-                      <p className="text-gray-700 font-medium">{edu.institution || 'Institution'} • {edu.fieldOfStudy || 'Field of Study'}</p>
-                      {edu.grade && <p className="text-gray-600 text-sm mt-1">Grade: {edu.grade}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Projects */}
-              {resumeData.projects.filter(project => project.name || project.description).length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-3 text-gray-800 border-l-4 border-indigo-600 pl-3">PROJECTS</h2>
-                  {resumeData.projects.filter(project => project.name || project.description).map((project, index) => (
-                    <div key={index} className="mb-3 bg-gray-50 p-4 rounded-lg">
-                      <div className="d-flex justify-between items-start mb-1">
-                        <h3 className="font-bold text-gray-900">{project.name || 'Project Name'}</h3>
-                        {project.link && <a href={project.link} className="text-blue-600 text-sm hover:underline">{project.link.replace('https://', '')}</a>}
-                      </div>
-                      <p className="text-gray-600 text-sm">{project.description || 'Description'}</p>
-                      {project.technologies && <p className="text-gray-700 text-xs mt-2">Tech: {project.technologies}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
+      return <ResumeLivePreview resumeData={resumeData} />;
     }
   };
 
